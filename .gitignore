@@ -1,0 +1,9 @@
+
+.DS_Store
+.idea/inspectionProfiles/profiles_settings.xml
+.idea/misc.xml
+.idea/modules.xml
+.idea/ocr-receipt.iml
+.idea/vcs.xml
+resr/ocr-receipt.sqlite
+test_regex.py
