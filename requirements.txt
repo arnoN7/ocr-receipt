@@ -1,0 +1,14 @@
+pytesseract~=0.3.8
+imutils~=0.5.4
+opencv-python~=4.5.5.62
+SQLAlchemy~=1.4.31
+flask~=2.0.3
+flask-sqlalchemy
+flask-wtf
+WTForms~=3.0.1
+MyApplication~=0.1.0
+Werkzeug~=2.0.3
+flask_migrate
+python-decouple
+flask_login
+email_validator

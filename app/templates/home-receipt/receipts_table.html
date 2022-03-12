@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Upload new File</h1>
+    <form method=post action="{{ url_for('receipt_blueprint.receipt_add')}}" enctype=multipart/form-data>
+      <input type=file name=file>
+      <input type=submit value=Upload accept="image/*">
+    </form>
+  <table id="data" class="table table-striped">
+    <thead>
+      <tr>
+        <th>Shop</th>
+        <th>Price</th>
+        <th>Date</th>
+        <th>City</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for receipt, shop in query %}
+          <tr>
+            <td>{{ shop.name }}</td>
+            <td>{{ receipt.total_price }}</td>
+            <td>{{ receipt.date }}</td>
+            <td><a href="{{ url_for('receipt_blueprint.receipt_detail', id_receipt=receipt.id)}}">Paris</a></td>
+            <td><a href="{{ url_for('receipt_blueprint.receipt_delete', id_receipt=receipt.id)}}">
+              <i class="bi bi-trash-fill text-muted"></i></a></td>
+          </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

@@ -1,14 +1,13 @@
 # from imutils.perspective import four_point_transform
 import pytesseract
+import random
 from datetime import datetime
 from functools import cmp_to_key
-from sqlalchemy import create_engine, Float
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy import or_, and_
-from sqlalchemy import Column, Integer, String
-from models import *
-import argparse
-import imutils
+from app.home_receipt.models import Shop, Receipt, PaidProduct, Product, ProductGroup
+from app import db
 import cv2
 import re
 import io
@@ -25,13 +24,14 @@ REGEX_RECEIPT = [["siret", r"Siret (?P<siret>[\d ]+)"],
 REGEX_ADDRESS = r"\d+.+(Rue|Avenue|Av|Impasse|Imp).+"
 
 RECOGNIZED_TXT = "recognized.txt"
-engine = create_engine('sqlite:///ocr-receipt.sqlite3', echo=True)
+#engine = create_engine('sqlite:///ocr-receipt.sqlite3', echo=True)
 
-Base.metadata.create_all(engine)
-Session = sessionmaker(bind=engine)
-session = Session()
+#Base.metadata.create_all(engine)
+#Session = sessionmaker(bind=engine)
+session = db.session
 
-image_path = 'receipts/IMG_9768.jpg'
+image_path_expl = '/Users/arnaudrover/PycharmProjects/ocr-receipt/receipts/IMG_9768.jpg'
+
 
 
 def contour_sort(a, b):
@@ -118,25 +118,29 @@ def record_products(text, receipt_id):
         quantity = int(match.group('qte'))
         price = float(match.group('price').replace(',', '.'))
         unit_price = price / quantity
-        product = Product(name=match.group('product'))
-        product_id = session.query(Product.id).filter(Product.name == product.name).first()
+        product = Product.query.filter_by(name=product_name).first()
         # Add product if not exist in product list
-        if product_id is None:
+        if product is None:
+            product_group = ProductGroup(name=product_name)
+            session.add(product_group)
+            session.commit()
+            product = Product(name=product_name, product_group_id=product_group.id)
             session.add(product)
             session.commit()
-        paid_product = PaidProduct(receipt_id=receipt_id, product_id=product.id,
-                                   quantity=quantity, price=price, unit_price=unit_price)
-        exists = session.query(PaidProduct.id).filter(
-            and_(PaidProduct.product_id == paid_product.product_id,
-                 PaidProduct.receipt_id == paid_product.receipt_id)).first() is not None
-        if not exists:
-            session.add(paid_product)
-            session.commit()
+        paid_product = PaidProduct(receipt_id=receipt_id, product_group_id=product.product_group_id,
+                                   quantity=quantity, price=price, unit_price=unit_price,
+                                   pos_top=random.randint(0, 100)/100, pos_left=0, pos_width=0.7, pos_height=0.2)
+        session.add(paid_product)
+        session.commit()
+    return None
 
 
-receipt_text = extract_text(image_path)
-file = open(RECOGNIZED_TXT, 'w+')
-file.write(receipt_text)
-r_id = record_receipt(receipt_text, image_path)
-if r_id is not None:
-    record_products(receipt_text, r_id)
+def add_new_receipt(image_path):
+    receipt_text = extract_text(image_path)
+    file = open(RECOGNIZED_TXT, 'w+')
+    file.write(receipt_text)
+    r_id = record_receipt(receipt_text, image_path)
+    if r_id is not None:
+        record_products(receipt_text, r_id)
+
+#add_new_receipt(image_path_expl)

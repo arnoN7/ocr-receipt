@@ -1,0 +1,85 @@
+/* area div */
+.area {
+  overflow: hidden;
+  position: relative;
+  margin-bottom: 8px;
+}
+
+/* area div hover cursor */
+.area:hover {
+  cursor: crosshair;
+}
+
+/* img tag in area div */
+.area IMG {
+  display: block;
+  max-width: 100%;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* rectangle div in area div */
+.area .rect {
+  opacity: 0;
+  transition: all 0s ease;
+  position: absolute;
+  border: 1px solid red;
+  z-index: 1;
+}
+
+/* rectangle div css when in draw or drawn mode */
+.area.draw .rect,
+.area.drawn .rect {
+  opacity: 1;
+}
+
+/* below css is for fun rendering outer exclusion area of drawn rectangle div with a opaque overlay */
+
+/* rectange exclusing pseudo elems base css */
+.area.drawn .rect .exclusion-x::before,
+.area.drawn .rect .exclusion-x::after,
+.area.drawn .rect .exclusion-y::before,
+.area.drawn .rect .exclusion-y::after {
+  position: absolute;
+  content: '';
+  display: block;
+  background: #000;
+  opacity: .75;
+  z-index: -1;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* rectange outer opaque x above css */
+.area.drawn .rect .exclusion-x::before {
+  bottom: calc(100% + 1px);
+  left: 50%;
+  transform: translateX(-50%);
+  height: 200vh;
+  width: 200vw;
+}
+
+/* rectange outer opaque x below css */
+.area.drawn .rect .exclusion-x::after {
+  top: calc(100% + 1px);
+  left: 50%;
+  transform: translateX(-50%);
+  height: 200vh;
+  width: 200vw;
+}
+
+/* rectange outer opaque y left css */
+.area.drawn .rect .exclusion-y::before {
+  right: calc(100% + 1px);
+  top: -1px;
+  bottom: -1px;
+  width: 200vw;
+}
+
+/* rectange outer opaque y right css */
+.area.drawn .rect .exclusion-y::after {
+  left: calc(100% + 1px);
+  top: -1px;
+  bottom: -1px;
+  width: 200vw;
+}

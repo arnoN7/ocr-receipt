@@ -7,3 +7,4 @@
 .idea/vcs.xml
 resr/ocr-receipt.sqlite
 test_regex.py
+/app/authentication/

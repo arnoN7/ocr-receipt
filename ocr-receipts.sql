@@ -20,10 +20,14 @@ CREATE TABLE "receipt" (
 CREATE TABLE "paid_product" (
   "id" SERIAL PRIMARY KEY,
   "receipt_id" int,
-  "product_id" int,
+  "product_group_id" int,
   "quantity" int,
   "price" float,
-  "unit_price" float
+  "unit_price" float,
+  "pos_top" float,
+  "pos_left" float,
+  "pos_width" float,
+  "pos_height" float
 );
 
 CREATE TABLE "product_group" (
@@ -43,7 +47,7 @@ ALTER TABLE "receipt" ADD FOREIGN KEY ("shop_id") REFERENCES "shop" ("id");
 
 ALTER TABLE "paid_product" ADD FOREIGN KEY ("receipt_id") REFERENCES "receipt" ("id");
 
-ALTER TABLE "paid_product" ADD FOREIGN KEY ("product_id") REFERENCES "product" ("id");
+ALTER TABLE "paid_product" ADD FOREIGN KEY ("product_group_id") REFERENCES "product_group" ("id");
 
 ALTER TABLE "product" ADD FOREIGN KEY ("product_group_id") REFERENCES "product_group" ("id");
 
