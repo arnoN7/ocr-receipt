@@ -6,14 +6,14 @@
         <div id="colll" style="position: relative;">
         <img id="img_receipt" src="/static/receipts/IMG_9768.jpg"  class="img-fluid" alt="Responsive image"
         style="position: absolute; top:0px; left:0px;">
-        <canvas id="myCanvas" width="200" height="100"
-        style="position:relative; top:0px; left:0px;"></canvas>
+        <canvas id="myCanvas" style="position:relative; top:0px; left:0px;"></canvas>
       </div>
       </div>
       <div id="coll6" class="col-6">
       <table id="data_table" class="table table-striped">
         <thead>
           <tr>
+            <th>#</th>
             <th>Product Name</th>
             <th>Quantity</th>
             <th>Unit Price</th>
@@ -22,30 +22,32 @@
         </thead>
         <tbody>
           {% for paid_product, product_group in query %}
-            <tr onmouseover="show_line({{paid_product.pos_top}}, {{paid_product.pos_left}})"
+            <tr onmouseover="show_line({{paid_product.pos_top}}, {{paid_product.pos_left}}, {{paid_product.pos_width}},
+            {{paid_product.pos_height}})"
                 onmouseout="hide_show_line()" class="edit_tr" id="{{paid_product.id}}" >
+              <td data-name="pid" data-type="int">{{paid_product.id}}</td>
               <td data-name="name" class="name" data-type="text" data-pk="{{paid_product.id}}">{{product_group.name}}</td>
-              <td data-name="quantity" class="name" data-type="text" data-pk="{{paid_product.id}}">{{paid_product.quantity}}</td>
-              <td data-name="unit_price" class="name" data-type="text" data-pk="{{paid_product.id}}">{{paid_product.unit_price}}</td>
-              <td data-name="price" class="name" data-type="text" data-pk="{{paid_product.id}} ">{{paid_product.price}}</td>
+              <td data-name="quantity" class="quantity" data-type="text" data-pk="{{paid_product.id}}">{{paid_product.quantity}}</td>
+              <td data-name="unit_price" class="unit price" data-type="text" data-pk="{{paid_product.id}}">{{paid_product.unit_price}}</td>
+              <td data-name="price" class="price" data-type="text" data-pk="{{paid_product.id}} ">{{paid_product.price}}</td>
             </tr>
           {% endfor %}
         </tbody>
       </table>
       </div>
       <script>
-        function show_line(pos_top) {
+        function show_line(pos_top, pos_left, pos_width, pos_height) {
           var canvas = document.getElementById("myCanvas");
           canvas.removeAttribute("hidden");
           var ctx = canvas.getContext("2d");
-          ctx.fillStyle = "#FF0000";
-          ctx.fillRect(0,0,200,100);
           let box = document.getElementById('receiptimg');
           let width = $( "#img_receipt" ).width();
           let height = $( "#img_receipt" ).height();
-          console.log({ width, height, pos_top });
+          ctx.fillStyle = "#FF0000";
+          ctx.fillRect(0,0,pos_width*width,pos_height*height);
+          console.log({ width, height, pos_top, pos_left, pos_width, pos_height });
           canvas.style.top = (pos_top*height)+"px";
-          canvas.style.left = (0*width)+"px";
+          canvas.style.left = (pos_left*width)+"px";
         }
         function hide_show_line() {
           var canvas = document.getElementById("myCanvas");

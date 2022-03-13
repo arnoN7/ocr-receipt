@@ -27,7 +27,7 @@ def index():
 def receipt_detail(id_receipt):
     query = db.session.query(PaidProduct, ProductGroup).\
         join(ProductGroup, PaidProduct.product_group_id == ProductGroup.id).\
-        filter(PaidProduct.receipt_id == id_receipt).all()
+        filter(PaidProduct.receipt_id == id_receipt).order_by(PaidProduct.id.asc()).all()
     return render_template('home-receipt/receipt_details_table.html', title='Bootstrap Table', query=query)
 
 @blueprint.route('/receipt/add', methods=['POST'])
