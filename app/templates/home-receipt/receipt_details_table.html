@@ -36,24 +36,7 @@
       </table>
       </div>
       <script>
-        function show_line(pos_top, pos_left, pos_width, pos_height) {
-          var canvas = document.getElementById("myCanvas");
-          canvas.removeAttribute("hidden");
-          var ctx = canvas.getContext("2d");
-          let box = document.getElementById('receiptimg');
-          let width = $( "#img_receipt" ).width();
-          let height = $( "#img_receipt" ).height();
-          ctx.fillStyle = "#FF0000";
-          ctx.fillRect(0,0,pos_width*width,pos_height*height);
-          console.log({ width, height, pos_top, pos_left, pos_width, pos_height });
-          canvas.style.top = (pos_top*height)+"px";
-          canvas.style.left = (pos_left*width)+"px";
-        }
-        function hide_show_line() {
-          var canvas = document.getElementById("myCanvas");
-          var ctx = canvas.getContext("2d");
-          canvas.setAttribute("hidden", "hidden");
-        }
+
     </script>
     </div>
 {% endblock %}

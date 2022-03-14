@@ -100,3 +100,35 @@ function draw() {
   };
   img.src = 'backdrop.png';
 }
+
+function drawBorder(ctx, xPos, yPos, width, height, thickness = 1)
+{
+  ctx.fillStyle='#FFFFFF';
+  ctx.fillRect(xPos - (thickness), yPos - (thickness), width + (thickness * 2), height + (thickness * 2));
+}
+
+function show_line(pos_top, pos_left, pos_width, pos_height) {
+    var canvas = document.getElementById("myCanvas");
+    var ctx = canvas.getContext("2d");
+    ctx.restore();
+    let box = document.getElementById('receiptimg');
+    let width = $( "#img_receipt" ).width();
+    let height = $( "#img_receipt" ).height();
+    ctx.globalAlpha = 0.4;
+    ctx.fillStyle = "#FFFF00";
+    ctx.strokeStyle = 'red';
+    ctx.stroke();
+    ctx.fillRect(0,0,pos_width*width,pos_height*height);
+    canvas.style.top = (pos_top*height)+"px";
+    canvas.style.left = (pos_left*width)+"px";
+    ctx.save();
+}
+function hide_show_line() {
+    var canvas = document.getElementById("myCanvas");
+    var ctx = canvas.getContext("2d");
+    let box = document.getElementById('receiptimg');
+    let width = $( "#img_receipt" ).width();
+    let height = $( "#img_receipt" ).height();
+    ctx.clearRect(0,0,width,height);
+}
+
