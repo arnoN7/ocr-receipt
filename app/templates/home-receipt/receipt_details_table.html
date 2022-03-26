@@ -1,15 +1,43 @@
 {% extends "base.html" %}
+{% from "_formhelpers_add_product.html" import render_field %}
 
 {% block content %}
-    <div id="roww" class="row">
-      <div id="coll" class="col">
+    <div id="roww" class="d-flex">
+      <div id="coll" class="mx-2 w-50">
         <div id="colll" style="position: relative;">
-        <img id="img_receipt" src="/static/receipts/IMG_9768.jpg"  class="img-fluid" alt="Responsive image"
+        <img id="img_receipt" src="/static/receipts/{{receipt.file}}"  class="img-fluid" alt="Responsive image"
         style="position: absolute; top:0px; left:0px;">
         <canvas id="myCanvas" style="position:relative; top:0px; left:0px;"></canvas>
       </div>
       </div>
-      <div id="coll6" class="col-6">
+      <div id="coll6" class="">
+        <div class="p-2 mb-4 border border-light rounded">
+          <h6>Receipt Overview</h6>
+          <div class="container">
+            <div class="row">
+              <div class="col">
+                <div class="input-group flex-nowrap">
+                  <span class="input-group-text" id="shop-wrapping"><i class="mx-1 bi bi-shop"></i>Shop</p></span>
+                  <input type="text" class="txtedit_shop form-control" placeholder="Username" aria-label="Username"
+                         aria-describedby="shop-wrapping" data-name='shop' data-pk='{{shop.id}}'
+                         value='{{shop.name}}'>
+                </div>
+              </div>
+              <div class="col">
+                <div class="input-group flex-nowrap">
+                  <span class="input-group-text" id="total-wrapping"><i class="bi bi-currency-euro"></i>Total</p></span>
+                  <input type="text" class="txtedit_receipt form-control" placeholder="Username" aria-label="Username"
+                         aria-describedby="total-wrapping" data-name='total_price' data-pk='{{receipt.id}}'
+                         value='{{receipt.total_price}}'>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      <div class="p-2 mb-4 alert alert-warning">
+        <i class="bi bi-exclamation-triangle mx-1"></i><strong>{{delta}}€ not found </strong> in the receipt, add product(s) to complete the list
+      </div>
       <table id="data_table" class="table table-striped">
         <thead>
           <tr>
@@ -21,15 +49,64 @@
           </tr>
         </thead>
         <tbody>
-          {% for paid_product, product_group in query %}
+            <tr>
+              <td></td>
+              <form action="{{url_for('receipt_blueprint.user_add_product', id_receipt=receipt.id)}}" method="post">
+              <td>
+                {{ render_field(form.product_name, class="form-control form-control-sm", placeholder="banana") }}
+              </td>
+              <td>
+                {{ render_field(form.quantity, class="form-control form-control-sm", placeholder="10") }}
+              </td>
+              <td>
+                {{ render_field(form.unit_price, class="form-control form-control-sm", placeholder="0.25") }}
+              </td>
+
+              <td>
+                <div class="d-flex flex-row">
+                  <div class="px-2 flex-shrink-1 ">
+                    {{ render_field(form.price, class="form-control form-control-sm", placeholder="2.5") }}
+                  </div>
+                  <div class="px-2 w-100">
+                    <button type="submit" class="btn btn-outline-success btn-sm"><i class="bi p-1 bi-cart-plus"></i></button>
+                  </div>
+                </div>
+              </td>
+              </form>
+            </tr>
+          {% for paid_product, product_group in query_product %}
             <tr onmouseover="show_line({{paid_product.pos_top}}, {{paid_product.pos_left}}, {{paid_product.pos_width}},
-            {{paid_product.pos_height}})"
+            {{paid_product.pos_height}}, 'del_'+{{paid_product.id}})"
                 onmouseout="hide_show_line()" class="edit_tr" id="{{paid_product.id}}" >
               <td data-name="pid" data-type="int">{{paid_product.id}}</td>
-              <td data-name="name" class="name" data-type="text" data-pk="{{paid_product.id}}">{{product_group.name}}</td>
-              <td data-name="quantity" class="quantity" data-type="text" data-pk="{{paid_product.id}}">{{paid_product.quantity}}</td>
-              <td data-name="unit_price" class="unit price" data-type="text" data-pk="{{paid_product.id}}">{{paid_product.unit_price}}</td>
-              <td data-name="price" class="price" data-type="text" data-pk="{{paid_product.id}} ">{{paid_product.price}}</td>
+              <td data-name="name" class="name" data-type="text" data-pk="{{paid_product.id}}">
+                <div class='edit' > {{product_group.name}}</div>
+                <input type='text' class='txtedit' value='{{product_group.name}}'
+                       data-name='name' data-pk='{{paid_product.id}}' ></td>
+              <td data-name="quantity" class="quantity" data-type="text" data-pk="{{paid_product.id}}">
+                <div class='edit' > {{paid_product.quantity}}</div>
+                <input type='text' class='txtedit' value='{{paid_product.quantity}}'
+                       data-name='quantity' data-pk='{{paid_product.id}}' ></td>
+              <td data-name="unit_price" class="unit price" data-type="text" data-pk="{{paid_product.id}}">
+                <div class='edit' > {{paid_product.unit_price}}€</div>
+                <input type='text' class='txtedit' value='{{paid_product.unit_price}}'
+                       data-name='unit_price' data-pk='{{paid_product.id}}' ></td>
+              <td data-name="price" class="price" data-type="text" data-pk="{{paid_product.id}}">
+                <div class="d-flex flex-row">
+                  <div class="edit px-2 flex-shrink-1 ">
+                    {{paid_product.price}}€
+                  </div>
+                  <input type='text' class='txtedit' value='{{paid_product.price}}'
+                       data-name='price' data-pk='{{paid_product.id}}' >
+                  <div class="ms-auto px-2">
+                    <a id='del_{{paid_product.id}}'
+                       href="{{url_for('receipt_blueprint.user_del_product', id_receipt=receipt.id,
+                       id_paid_product=paid_product.id)}}"
+                       role="button" class="btn btn-outline-danger btn-sm delbutton">
+                      <i class="bi bi-trash"></i></a>
+                  </div>
+                </div>
+              </td>
             </tr>
           {% endfor %}
         </tbody>

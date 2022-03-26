@@ -87,3 +87,11 @@ canvas {
   bottom: -1px;
   width: 200vw;
 }
+
+.txtedit{
+ display: none;
+}
+
+.delbutton{
+ display: none;
+}

@@ -2,7 +2,7 @@
 import pytesseract
 import random
 from pytesseract import Output
-from datetime import datetime
+from datetime import datetime, date
 from functools import cmp_to_key
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -12,17 +12,17 @@ from app import db
 import cv2
 import re
 import io
+import os
 
 REGEX_PRODUCT = r"(?P<qte>^\d+) (?P<product>.{3,}) (?P<price>\d+[\.,]\d{2})"
 REGEX_DATE = r"\d{2}/\d{2}/\d{4}"
-REGEX_RECEIPT = [["siret", r"Siret (?P<siret>[\d ]+)"],
-                 ["address", r"(?P<address>\d+.+(Rue|Avenue|Av|Impasse|Imp).+)"],
+REGEX_RECEIPT = [["siret", r"siret (?P<siret>[\d ]+)"],
+                 ["address", r"(?P<address>\d+.+(rue|avenue|av|impasse|imp).+)"],
                  ["postcode", r"(?P<postcode>\d{5}) [^\n ]+"],
-                 ["city", r"(\d{5}) (?P<city>[^\n ]+)"],
-                 ["phone", r"(?P<phone>(\d{2}|\+\d{3}).(\d{2}.){3}\d{2})"],
+                 ["city", r"(\d{5}) (?P<city>[^\n \d]+)"],
+                 ["phone", r"(?P<phone>(\d{2}|\+\d{3})\.(\d{2}\.){3}\d{2})"],
                  ["date", r"(?P<date>(\d{2}/){2}\d{4})"],
-                 ["total_price", r"TOTAL.+ (?P<total_price>\d+\.\d{2})"]]
-REGEX_ADDRESS = r"\d+.+(Rue|Avenue|Av|Impasse|Imp).+"
+                 ["total_price", r"^total[. \]]+(?P<total_price>\d+[\.]\d{2})"]]
 
 RECOGNIZED_TXT = "recognized.txt"
 #engine = create_engine('sqlite:///ocr-receipt.sqlite3', echo=True)
@@ -31,7 +31,7 @@ RECOGNIZED_TXT = "recognized.txt"
 #Session = sessionmaker(bind=engine)
 session = db.session
 
-image_path_expl = '/Users/arnaudrover/PycharmProjects/ocr-receipt/receipts/IMG_9768.jpg'
+image_path_expl = '/Users/arnaudrover/PycharmProjects/ocr-receipt/app/static/receipts/BOC_IMG_9843.jpg'
 
 
 
@@ -59,12 +59,16 @@ def extract_text(image):
     # of the rectangle to be detected.
     # A smaller value like (10, 10) will detect
     # each word instead of a sentence.
-    rect_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (25, 25))
+    rect_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (25, 80))
     # Applying dilation on the threshold image
     dilation = cv2.dilate(edged, rect_kernel, iterations=1)
     # Finding contours
     contours, hierarchy = cv2.findContours(dilation, cv2.RETR_EXTERNAL,
                                            cv2.CHAIN_APPROX_SIMPLE)
+    cv2.drawContours(img, contours, -1, (0, 255, 0), 3)
+    #cv2.imshow('sample image', img)
+    #cv2.waitKey()
+    #cv2.destroyAllWindows()
 
     im3 = img.copy()
     gray2 = cv2.cvtColor(im3, cv2.COLOR_BGR2GRAY)
@@ -81,7 +85,7 @@ def extract_text(image):
         current_line = -1
         current_par = -1
         for i in range(len(data['line_num'])):
-            txt = data['text'][i]
+            txt = data['text'][i].lower().replace(',', '.')
             line_num = data['line_num'][i]
             block_num = data['block_num'][i]
             par_num = data['par_num'][i]
@@ -137,18 +141,22 @@ def record_receipt(text, path):
             break
     if params.get('date', None) is not None:
         params['date'] = datetime.strptime(params['date'], '%d/%m/%Y')
+    else:
+        params['date'] = date.today()
 
     shop = Shop(name=name, address=params.get('address', "NO_ADDRESS"), postcode=params.get('postcode', "00000"),
                 city=params.get('city', "NO_CITY"), siret=params.get('siret', "NO_SIRET"),
                 phone=params.get('phone', "NO_PHONE"))
-    exists = session.query(Shop.id).filter(
+    query_shop = session.query(Shop.id).filter(
         or_(Shop.name == shop.name, Shop.siret == params.get('siret', ""),
-            Shop.phone == params.get('phone', ""))).first() is not None
-    if not exists:
+            Shop.phone == params.get('phone', ""))).first()
+    if query_shop is None:
         session.add(shop)
         session.commit()
+    else:
+        shop = query_shop
     receipt = Receipt(shop_id=shop.id, date=params.get('date', ""),
-                      total_price=params.get('total_price', 0), file=path)
+                      total_price=params.get('total_price', 0), file=os.path.basename(path))
     exists = session.query(Receipt.id).filter(Receipt.file == receipt.file).first() is not None
     if not exists:
         session.add(receipt)
@@ -163,21 +171,25 @@ def record_products(text, receipt_id):
         quantity = int(match.group('qte'))
         price = float(match.group('price').replace(',', '.'))
         unit_price = price / quantity
-        product = Product.query.filter_by(name=product_name).first()
-        # Add product if not exist in product list
-        if product is None:
-            product_group = ProductGroup(name=product_name)
-            session.add(product_group)
-            session.commit()
-            product = Product(name=product_name, product_group_id=product_group.id)
-            session.add(product)
-            session.commit()
-        paid_product = PaidProduct(receipt_id=receipt_id, product_group_id=product.product_group_id,
-                                   quantity=quantity, price=price, unit_price=unit_price,
-                                   pos_top=random.randint(0, 100)/100, pos_left=0, pos_width=0.7, pos_height=0.2)
-        session.add(paid_product)
-        session.commit()
+        add_product(price, product_name, quantity, receipt_id, unit_price)
     return None
+
+def add_product(product_name, quantity, unit_price, price, receipt_id):
+    product = Product.query.filter_by(name=product_name).first()
+    # Add product if not exist in product list
+    if product is None:
+        product_group = ProductGroup(name=product_name)
+        session.add(product_group)
+        session.commit()
+        product = Product(name=product_name, product_group_id=product_group.id)
+        session.add(product)
+        session.commit()
+    paid_product = PaidProduct(receipt_id=receipt_id, product_group_id=product.product_group_id,
+                               quantity=quantity, price=price, unit_price=unit_price,
+                               pos_top=0, pos_left=0, pos_width=0, pos_height=0)
+    session.add(paid_product)
+    session.commit()
+
 
 def record_products_pos(text_data, receipt_id):
     for i in text_data:
