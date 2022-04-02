@@ -2,23 +2,24 @@
 {% from "_formhelpers_add_product.html" import render_field %}
 
 {% block content %}
-    <div id="roww" class="d-flex">
-      <div id="coll" class="mx-2 w-50">
-        <div id="colll" style="position: relative;">
-        <img id="img_receipt" src="/static/receipts/{{receipt.file}}"  class="img-fluid" alt="Responsive image"
-        style="position: absolute; top:0px; left:0px;">
-        <canvas id="myCanvas" style="position:relative; top:0px; left:0px;"></canvas>
+    <div class="d-flex">
+      <div class="mx-2 flex-grow-1">
+        <div style="position: relative;">
+        <img id="img_receipt" src="/static/receipts/{{receipt.file}}"  class="img-fluid imagereceipt">
+        <canvas id="myCanvas" class="meta-canvas" height="800"></canvas>
+        </div>
       </div>
-      </div>
-      <div id="coll6" class="">
-        <div class="p-2 mb-4 border border-light rounded">
+      <div class="flex-shrink-0">
+        <div class="p-2 mb-4 border border-light rounded" onmouseover="show_line({{receipt.prices_pos_top}},
+        {{receipt.prices_pos_left}}, {{receipt.prices_pos_width}},
+            {{receipt.prices_pos_height}}, 9999)">
           <h6>Receipt Overview</h6>
           <div class="container">
             <div class="row">
               <div class="col">
                 <div class="input-group flex-nowrap">
                   <span class="input-group-text" id="shop-wrapping"><i class="mx-1 bi bi-shop"></i>Shop</p></span>
-                  <input type="text" class="txtedit_shop form-control" placeholder="Username" aria-label="Username"
+                  <input type="text" class="txtedit_shop form-control" aria-label="Username"
                          aria-describedby="shop-wrapping" data-name='shop' data-pk='{{shop.id}}'
                          value='{{shop.name}}'>
                 </div>

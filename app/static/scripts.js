@@ -197,8 +197,10 @@ function drawBorder(ctx, xPos, yPos, width, height, thickness = 1)
 function show_line(pos_top, pos_left, pos_width, pos_height, del_button_id) {
     var canvas = document.getElementById("myCanvas");
     var ctx = canvas.getContext("2d");
-    var del_button = document.getElementById(del_button_id);
-    del_button.style.display = 'block';
+    if (del_button != null) {
+        var del_button = document.getElementById(del_button_id);
+        del_button.style.display = 'block';
+    }
     ctx.restore();
     let box = document.getElementById('receiptimg');
     let width = $( "#img_receipt" ).width();

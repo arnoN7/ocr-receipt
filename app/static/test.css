@@ -95,3 +95,17 @@ canvas {
 .delbutton{
  display: none;
 }
+
+.imagereceipt{
+max-height: 700px;
+position: absolute;
+top:0px;
+left:0px;
+}
+
+.meta-canvas{
+position: relative;
+top:0px;
+left:0px;
+height: 700px;
+}

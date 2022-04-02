@@ -30,6 +30,10 @@ class Receipt(Base):
     total_price = sa.Column(sa.Float())
     file = sa.Column(sa.String())
     date = sa.Column(sa.TIMESTAMP(), server_default=func.now())
+    prices_pos_top = sa.Column(sa.Float())
+    prices_pos_left = sa.Column(sa.Float())
+    prices_pos_width = sa.Column(sa.Float())
+    prices_pos_height = sa.Column(sa.Float())
 
 
 class PaidProduct(Base):
