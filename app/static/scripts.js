@@ -197,7 +197,7 @@ function drawBorder(ctx, xPos, yPos, width, height, thickness = 1)
 function show_line(pos_top, pos_left, pos_width, pos_height, del_button_id) {
     var canvas = document.getElementById("myCanvas");
     var ctx = canvas.getContext("2d");
-    if (del_button != null) {
+    if (del_button_id != null) {
         var del_button = document.getElementById(del_button_id);
         del_button.style.display = 'block';
     }

@@ -10,9 +10,10 @@
         </div>
       </div>
       <div class="flex-shrink-0">
-        <div class="p-2 mb-4 border border-light rounded" onmouseover="show_line({{receipt.prices_pos_top}},
-        {{receipt.prices_pos_left}}, {{receipt.prices_pos_width}},
-            {{receipt.prices_pos_height}}, 9999)">
+        <div class="p-2 mb-4 border border-light rounded"
+             onmouseover="show_line({{receipt.prices_pos_top/receipt.img_height}},
+        {{receipt.prices_pos_left/receipt.img_width}}, {{receipt.prices_pos_width/receipt.img_width}},
+            {{receipt.prices_pos_height/receipt.img_height}}, null)">
           <h6>Receipt Overview</h6>
           <div class="container">
             <div class="row">

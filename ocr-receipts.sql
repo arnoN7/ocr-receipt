@@ -14,14 +14,21 @@ CREATE TABLE "receipt" (
   "shop_id" int,
   "total_price" float,
   "file" varchar,
-  "date" timestamp DEFAULT 'now()'
+  "date" timestamp DEFAULT 'now()',
+  "prices_pos_top" integer,
+  "prices_pos_left" integer,
+  "prices_pos_width" integer,
+  "prices_pos_height" integer,
+  "img_width" integer,
+  "img_height" integer,
+  "pos_y_total_price" integer
 );
 
 CREATE TABLE "paid_product" (
   "id" SERIAL PRIMARY KEY,
   "receipt_id" int,
   "product_group_id" int,
-  "quantity" int,
+  "quantity" float,
   "price" float,
   "unit_price" float,
   "pos_top" float,

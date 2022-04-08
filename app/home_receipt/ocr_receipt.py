@@ -1,6 +1,7 @@
 # from imutils.perspective import four_point_transform
 import copy
 
+import numpy
 import pytesseract
 import random
 from pytesseract import Output
@@ -12,16 +13,22 @@ from sqlalchemy import or_, and_
 from app.home_receipt.models import Shop, Receipt, PaidProduct, Product, ProductGroup
 from app import db
 import cv2
+import numpy as np
 import re
 import io
 import os
 
 TOTAL_PRICE = "total_price"
+MAX_START_COLUMN_PRICE = 0.75
+MIN_OVERLAP = 0.2
 
 REGEX_PRODUCT = r"(?P<qte>^\d+) (?P<product>.{3,}) (?P<price>\d+[\.,]\d{2})"
 REGEX_PRODUCT_QTY = r"(?P<qte>^\d+)(?P<product>.+)"
+REGEX_BEGIN_SPACES = r"^[ ]+"
+REGEX_END_SPACES = r"[ ]+$"
 REGEX_DATE = r"\d{2}/\d{2}/\d{4}"
 REGEX_PRICE = r" (?P<price>\d+\.\d{2})"
+REGEX_PRICES = r"(?P<price>\d+\.\d{2}.+)"
 REGEX_RECEIPT = [["siret", r"siret (?P<siret>[\d ]+)"],
                  ["address", r"(?P<address>\d+.+(rue|avenue|av|impasse|imp).+)"],
                  ["postcode", r"(?P<postcode>\d{5}) [^\n ]+"],
@@ -36,7 +43,7 @@ RECOGNIZED_TXT = "recognized.txt"
 # Session = sessionmaker(bind=engine)
 session = db.session
 
-image_path_expl = '/Users/arnaudrover/PycharmProjects/ocr-receipt/app/static/receipts/BOC_IMG_9843.jpg'
+image_path_expl = '/Users/arnaudrover/PycharmProjects/ocr-receipt/app/static/receipts/BOC_IMG_0169.jpg'
 
 
 class Rect():
@@ -46,17 +53,19 @@ class Rect():
         self.height = height
         self.width = width
 
-    def is_vertical_overlap(self, rect):
-        if self.x < rect.x < (self.x + self.width) < (rect.x + rect.width):
-            return True
-        if rect.x < self.x < (rect.x + rect.width) < (self.x + self.width):
-            return True
+    def is_vertical_overlap(self, rect, min_overlap=0):
+        if self.x <= rect.x < (self.x + self.width) <= (rect.x + rect.width):
+            if (((self.x + self.width) - rect.x)/((rect.x + rect.width) - self.x)) > min_overlap:
+                return True
+        if rect.x <= self.x < (rect.x + rect.width) <= (self.x + self.width):
+            if (((rect.x + rect.width) - self.x) / ((self.x + self.width) - rect.x)) > min_overlap:
+                return True
         return False
 
     def get_outer_rect(self, rect):
-        if self.x < rect.x < (rect.x + rect.width) < (self.x + self.width):
+        if self.x <= rect.x < (rect.x + rect.width) <= (self.x + self.width):
             return copy.deepcopy(self)
-        if rect.x < self.x < (self.x + self.width) < (rect.x + rect.width):
+        if rect.x <= self.x < (self.x + self.width) <= (rect.x + rect.width):
             return copy.deepcopy(rect)
         return None
 
@@ -114,9 +123,9 @@ def extract_text(image):
     contours, hierarchy = cv2.findContours(dilation, cv2.RETR_EXTERNAL,
                                            cv2.CHAIN_APPROX_SIMPLE)
     cv2.drawContours(img, contours, -1, (0, 255, 0), 3)
-    # cv2.imshow('sample image', img)
-    # cv2.waitKey()
-    # cv2.destroyAllWindows()
+    #cv2.imshow('sample image', img)
+    #cv2.waitKey()
+    #cv2.destroyAllWindows()
 
     im3 = img.copy()
     gray2 = cv2.cvtColor(im3, cv2.COLOR_BGR2GRAY)
@@ -127,8 +136,24 @@ def extract_text(image):
     current_gl_line = 0
     for cnt in contours:
         x, y, w, h = cv2.boundingRect(cnt)
-        cropped = gray2[y:y + h, x:x + w]
-        data = pytesseract.image_to_data(cropped, lang='fra', output_type=Output.DICT)
+        # Generate mask corresponding to current contour (cnt)
+        mask = np.zeros(gray2.shape)
+        mask.fill(255)
+        mask = cv2.drawContours(mask, [cnt], -1, 0, cv2.FILLED)
+        #mask = cv2.drawContours(mask, [cnt], -1, (0, 255, 0), thickness=cv2.FILLED)
+        cropped = copy.deepcopy(gray2)
+        # Turn black every pixel out of contour (cnt)
+        cropped[mask.astype(np.bool)] = 0
+        # crop image according to contour (cnt)
+        cropped = cropped[y:y + h, x:x + w]
+        th3 = cv2.adaptiveThreshold(cropped, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, \
+                                   cv2.THRESH_BINARY, 39, 25)
+
+        #cv2.imshow('sample image', th3)
+        #cv2.waitKey()
+        #cv2.destroyAllWindows()
+        # send image to Tesseract
+        data = pytesseract.image_to_data(th3, output_type=Output.DICT)
         current_block = -1
         current_line = -1
         current_par = -1
@@ -213,9 +238,10 @@ def record_receipt(text, text_data, path, img_h, img_w):
         shop = query_shop
     price_column = locate_price_column(pos_y_total_price, text_data)
     receipt = Receipt(shop_id=shop.id, date=params.get('date', ""),
-                      total_price=total_price, file=os.path.basename(path), prices_pos_top=price_column.y / img_h,
-                      prices_pos_left=price_column.x / img_w, prices_pos_width=price_column.width / img_w,
-                      prices_pos_height=price_column.height / img_h)
+                      total_price=total_price, file=os.path.basename(path), prices_pos_top=price_column.y,
+                      prices_pos_left=price_column.x, prices_pos_width=price_column.width,
+                      prices_pos_height=price_column.height, img_width=img_w, img_height=img_h,
+                      pos_y_total_price=pos_y_total_price)
     exists = session.query(Receipt.id).filter(Receipt.file == receipt.file).first() is not None
     if not exists:
         session.add(receipt)
@@ -229,7 +255,7 @@ def locate_price_column(pos_y_total_price, text_data):
     for i in text_data:
         # Don't find prices after total price position
         if text_data[i]['words'][0]['rect'].y > pos_y_total_price:
-            break
+            continue
         line_txt = text_data[i]['text']
         matches = re.finditer(REGEX_PRICE, line_txt, re.MULTILINE)
         for match in matches:
@@ -241,7 +267,8 @@ def locate_price_column(pos_y_total_price, text_data):
                     price_rect = text_data[i]['words'][j]['rect']
             if price_rect is None:
                 break
-            if price_column.is_vertical_overlap(price_rect):
+            if price_column.is_vertical_overlap(price_rect, MIN_OVERLAP):
+                # Adjust price column (i.e photo was taken in diagonal)
                 right_rect = price_column.get_side_right(price_rect)
                 left_rect = price_column.get_side_left(price_rect)
                 price_column.x = left_rect.x
@@ -250,9 +277,11 @@ def locate_price_column(pos_y_total_price, text_data):
                 price_column.x = outer_rect.x
                 price_column.width = outer_rect.width
             else:
-                right_rect = price_column.get_side_right(price_rect)
-                price_column.x = right_rect.x
-                price_column.width = right_rect.width
+                # Reset price column only if it is at the beginning of the receipt
+                if text_data[i]['words'][0]['rect'].y < pos_y_total_price * MAX_START_COLUMN_PRICE:
+                    right_rect = price_column.get_side_right(price_rect)
+                    price_column.x = right_rect.x
+                    price_column.width = right_rect.width
             price_column.y = price_column.get_upper(price_rect).y
             price_column.height = pos_y_total_price - price_column.y
     return price_column
@@ -320,17 +349,21 @@ def record_products_pos(text_data, receipt):
     column_price = Rect(receipt.prices_pos_left, receipt.prices_pos_top, receipt.prices_pos_height,
                         receipt.prices_pos_width)
     for i in text_data:
+        if text_data[i]['words'][0]['rect'].y >= receipt.pos_y_total_price:
+            continue
         # Get product from line
         if price := is_product_line(text_data[i], column_price):
             # Remove prices
-            quantity = 1
-            product_text = re.sub(REGEX_PRICE, '', text_data[i]['text'])
+            quantity = 0
+            product_text = re.sub(REGEX_PRICES, '', text_data[i]['text'])
+            product_text = re.sub(REGEX_BEGIN_SPACES, '', product_text)
+            product_text = re.sub(REGEX_END_SPACES, '', product_text)
             matches = re.finditer(REGEX_PRODUCT_QTY, product_text, re.MULTILINE)
-            if any(matches):
-                for match in matches:
-                    quantity = int(match.group('qte'))
-                    product_name = match.group('product')
-            else:
+            for match in matches:
+                quantity = int(match.group('qte'))
+                product_name = match.group('product')
+            if quantity == 0:
+                # Quantity not found in product line set 0
                 quantity = 1
                 product_name = product_text
             unit_price = price / quantity
@@ -362,4 +395,4 @@ def add_new_receipt(image_path):
         # record_products(receipt_data, r_id)
         record_products_pos(receipt_data, receipt)
 
-# add_new_receipt(image_path_expl)
+#add_new_receipt(image_path_expl)

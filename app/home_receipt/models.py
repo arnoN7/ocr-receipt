@@ -30,10 +30,13 @@ class Receipt(Base):
     total_price = sa.Column(sa.Float())
     file = sa.Column(sa.String())
     date = sa.Column(sa.TIMESTAMP(), server_default=func.now())
-    prices_pos_top = sa.Column(sa.Float())
-    prices_pos_left = sa.Column(sa.Float())
-    prices_pos_width = sa.Column(sa.Float())
-    prices_pos_height = sa.Column(sa.Float())
+    prices_pos_top = sa.Column(sa.Integer())
+    prices_pos_left = sa.Column(sa.Integer())
+    prices_pos_width = sa.Column(sa.Integer())
+    prices_pos_height = sa.Column(sa.Integer())
+    img_width = sa.Column(sa.Integer())
+    img_height = sa.Column(sa.Integer())
+    pos_y_total_price = sa.Column(sa.Integer())
 
 
 class PaidProduct(Base):
@@ -43,7 +46,7 @@ class PaidProduct(Base):
     id = sa.Column(sa.Integer(), autoincrement=True, primary_key=True)
     receipt_id = sa.Column(sa.Integer(), sa.ForeignKey('receipt.id'))
     product_group_id = sa.Column(sa.Integer(), sa.ForeignKey('product_group.id'))
-    quantity = sa.Column(sa.Integer())
+    quantity = sa.Column(sa.Float())
     price = sa.Column(sa.Float())
     unit_price = sa.Column(sa.Float())
     pos_top = sa.Column(sa.Float())
