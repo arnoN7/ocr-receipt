@@ -13,7 +13,7 @@
         <div class="p-2 mb-4 border border-light rounded"
              onmouseover="show_line({{receipt.prices_pos_top/receipt.img_height}},
         {{receipt.prices_pos_left/receipt.img_width}}, {{receipt.prices_pos_width/receipt.img_width}},
-            {{receipt.prices_pos_height/receipt.img_height}}, null)">
+            {{receipt.prices_pos_height/receipt.img_height}}, null)" onmouseout="hide_show_line()">
           <h6>Receipt Overview</h6>
           <div class="container">
             <div class="row">
@@ -28,9 +28,17 @@
               <div class="col">
                 <div class="input-group flex-nowrap">
                   <span class="input-group-text" id="total-wrapping"><i class="bi bi-currency-euro"></i>Total</p></span>
-                  <input type="text" class="txtedit_receipt form-control" placeholder="Username" aria-label="Username"
+                  <input type="text" class="txtedit_receipt form-control"
                          aria-describedby="total-wrapping" data-name='total_price' data-pk='{{receipt.id}}'
                          value='{{receipt.total_price}}'>
+                </div>
+              </div>
+              <div class="col">
+                <div class="input-group flex-nowrap">
+                  <span class="input-group-text" id="date-wrapping"><i class="px-1 bi bi-calendar3-event"></i>Date</p></span>
+                  <input type="text" class="txtedit_receipt form-control"
+                         aria-describedby="total-wrapping" data-name='data' data-pk='{{receipt.id}}'
+                         value='{{receipt.date.strftime('%d-%m-%Y')}}'>
                 </div>
               </div>
             </div>

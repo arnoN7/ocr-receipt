@@ -1,6 +1,7 @@
 # from imutils.perspective import four_point_transform
 import copy
 
+import imutils
 import numpy
 import pytesseract
 import random
@@ -43,7 +44,7 @@ RECOGNIZED_TXT = "recognized.txt"
 # Session = sessionmaker(bind=engine)
 session = db.session
 
-image_path_expl = '/Users/arnaudrover/PycharmProjects/ocr-receipt/app/static/receipts/BOC_IMG_0169.jpg'
+image_path_expl = '/Users/arnaudrover/PycharmProjects/ocr-receipt/app/static/receipts/BOC_IMG_0224.jpg'
 
 
 class Rect():
@@ -102,101 +103,85 @@ def contour_sort(a, b):
         return xa - xb
 
 
-def extract_text(image):
+def prepare_img(image, debug=False):
+    # load image
+    orig = cv2.imread(image)
+    img = orig.copy()
+    ratio = orig.shape[1] / float(img.shape[1])
+    # convert the image to grayscale, blur it slightly, and apply edge detection
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    blurred = cv2.GaussianBlur(gray, (5, 5,), 0)
+    edged = cv2.Canny(blurred, 75, 200)
+    rect_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (120,120))
+    dilation = cv2.dilate(edged, rect_kernel, iterations=1)
+    # Find Receipt contour
+    contours, hierarchy = cv2.findContours(dilation.copy(), cv2.RETR_EXTERNAL,
+                            cv2.CHAIN_APPROX_SIMPLE)
+    receipt_cnt = sorted(contours, key=cv2.contourArea, reverse=True)
+    x, y, w, h = cv2.boundingRect(receipt_cnt[0])
+    cropped_receipt = gray[y:y+h, x:x+w]
+    cropped_receipt = cv2.adaptiveThreshold(cropped_receipt, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, \
+                                cv2.THRESH_BINARY, 39, 25)
+    if debug:
+        cv2.drawContours(img, contours, -1, (0, 255, 0), 3)
+        cv2.imshow('Original ', gray)
+        cv2.imshow('Contour ', img)
+        cv2.imshow('Cropped', cropped_receipt)
+        cv2.waitKey()
+        cv2.destroyAllWindows()
+    return cropped_receipt
+
+def ocr_image(cropped_receipt):
+    data = pytesseract.image_to_data(cropped_receipt, output_type=Output.DICT)
+    img_h = cropped_receipt.shape[0]
+    img_w = cropped_receipt.shape[1]
+    current_gl_line = 0
+    current_block = -1
+    current_line = -1
+    current_par = -1
     result = {}
     result_text = ""
-    img = cv2.imread(image)
-    img_h = img.shape[0]
-    img_w = img.shape[1]
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    blur = cv2.GaussianBlur(gray, (5, 5), 0)
-    edged = cv2.Canny(blur, 75, 250)
-    # Specify structure shape and kernel size.
-    # Kernel size increases or decreases the area
-    # of the rectangle to be detected.
-    # A smaller value like (10, 10) will detect
-    # each word instead of a sentence.
-    rect_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (25, 80))
-    # Applying dilation on the threshold image
-    dilation = cv2.dilate(edged, rect_kernel, iterations=1)
-    # Finding contours
-    contours, hierarchy = cv2.findContours(dilation, cv2.RETR_EXTERNAL,
-                                           cv2.CHAIN_APPROX_SIMPLE)
-    cv2.drawContours(img, contours, -1, (0, 255, 0), 3)
-    #cv2.imshow('sample image', img)
-    #cv2.waitKey()
-    #cv2.destroyAllWindows()
-
-    im3 = img.copy()
-    gray2 = cv2.cvtColor(im3, cv2.COLOR_BGR2GRAY)
-    file = open(RECOGNIZED_TXT, "w+")
-    file.write("")
-    file.close()
-    contours = sorted(contours, key=cmp_to_key(contour_sort))
-    current_gl_line = 0
-    for cnt in contours:
-        x, y, w, h = cv2.boundingRect(cnt)
-        # Generate mask corresponding to current contour (cnt)
-        mask = np.zeros(gray2.shape)
-        mask.fill(255)
-        mask = cv2.drawContours(mask, [cnt], -1, 0, cv2.FILLED)
-        #mask = cv2.drawContours(mask, [cnt], -1, (0, 255, 0), thickness=cv2.FILLED)
-        cropped = copy.deepcopy(gray2)
-        # Turn black every pixel out of contour (cnt)
-        cropped[mask.astype(np.bool)] = 0
-        # crop image according to contour (cnt)
-        cropped = cropped[y:y + h, x:x + w]
-        th3 = cv2.adaptiveThreshold(cropped, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, \
-                                   cv2.THRESH_BINARY, 39, 25)
-
-        #cv2.imshow('sample image', th3)
-        #cv2.waitKey()
-        #cv2.destroyAllWindows()
-        # send image to Tesseract
-        data = pytesseract.image_to_data(th3, output_type=Output.DICT)
-        current_block = -1
-        current_line = -1
-        current_par = -1
-        for i in range(len(data['line_num'])):
-            txt = data['text'][i].lower().replace(',', '.')
-            line_num = data['line_num'][i]
-            block_num = data['block_num'][i]
-            par_num = data['par_num'][i]
-            top, left = data['top'][i], data['left'][i]
-            width, height = data['width'][i], data['height'][i]
-            if not (txt == ''):
-                if current_line != line_num or current_block != block_num or current_par != par_num:
-                    current_gl_line = current_gl_line + 1
-                    current_line = line_num
-                    current_block = block_num
-                    current_par = par_num
-                # Add text in line
-                if current_gl_line not in result:
-                    result[current_gl_line] = {}
-                    result[current_gl_line]['text'] = txt
-                    result[current_gl_line]['words'] = {}
-                    j = 0
-                else:
-                    result[current_gl_line]['text'] = result[current_gl_line]['text'] + " " + txt
-                # Record words metadata
-                result[current_gl_line]['words'][j] = {}
-                result[current_gl_line]['words'][j]['text'] = txt
-                result[current_gl_line]['words'][j]['rect'] = Rect(left + x, top + y, height, width)
-                j = j + 1
-                # Record left of the line and be sure we get the top left point
-                if 'left' not in result[current_gl_line]:
-                    result[current_gl_line]['left'] = left + x
-                if 'top' not in result[current_gl_line]:
-                    result[current_gl_line]['top'] = top + y
-                if 'height' not in result[current_gl_line]:
-                    result[current_gl_line]['height'] = height
-                if 'width' not in result[current_gl_line]:
-                    result[current_gl_line]['width'] = width
-                # ensure we include all words in line in width
-                else:
-                    new_width = x + left + width - result[current_gl_line]['left']
-                    if new_width > result[current_gl_line]['width']:
-                        result[current_gl_line]['width'] = new_width
+    # Organise Data per line and record position metadata
+    for i in range(len(data['line_num'])):
+        txt = data['text'][i].lower().replace(',', '.')
+        line_num = data['line_num'][i]
+        block_num = data['block_num'][i]
+        par_num = data['par_num'][i]
+        top, left = data['top'][i], data['left'][i]
+        width, height = data['width'][i], data['height'][i]
+        if not (txt == ''):
+            if current_line != line_num or current_block != block_num or current_par != par_num:
+                current_gl_line = current_gl_line + 1
+                current_line = line_num
+                current_block = block_num
+                current_par = par_num
+            # Add text in line
+            if current_gl_line not in result:
+                result[current_gl_line] = {}
+                result[current_gl_line]['text'] = txt
+                result[current_gl_line]['words'] = {}
+                j = 0
+            else:
+                result[current_gl_line]['text'] = result[current_gl_line]['text'] + " " + txt
+            # Record words metadata
+            result[current_gl_line]['words'][j] = {}
+            result[current_gl_line]['words'][j]['text'] = txt
+            result[current_gl_line]['words'][j]['rect'] = Rect(left, top, height, width)
+            j = j + 1
+            # Record left of the line and be sure we get the top left point
+            if 'left' not in result[current_gl_line]:
+                result[current_gl_line]['left'] = left
+            if 'top' not in result[current_gl_line]:
+                result[current_gl_line]['top'] = top
+            if 'height' not in result[current_gl_line]:
+                result[current_gl_line]['height'] = height
+            if 'width' not in result[current_gl_line]:
+                result[current_gl_line]['width'] = width
+            # ensure we include all words in line in width
+            else:
+                new_width = left + width - result[current_gl_line]['left']
+                if new_width > result[current_gl_line]['width']:
+                    result[current_gl_line]['width'] = new_width
     for i in result:
         result[i]['left'] = result[i]['left'] / img_w
         result[i]['width'] = result[i]['width'] / img_w
@@ -206,10 +191,11 @@ def extract_text(image):
             result_text = str(result[i]['text']) + '\n'
         else:
             result_text = result_text + str(result[i]['text']) + '\n'
-    return result, result_text, img_h, img_w
+    return result, result_text
 
-
-def record_receipt(text, text_data, path, img_h, img_w):
+def record_receipt(text, text_data, path, shape):
+    img_h = shape[0]
+    img_w = shape[1]
     buf = io.StringIO(text)
     name = buf.readline().replace('\n', '')
     params = {}
@@ -386,13 +372,17 @@ def record_products_pos(text_data, receipt):
 
 
 def add_new_receipt(image_path):
-    receipt_data, receipt_text, img_h, img_w = extract_text(image_path)
-    file = open(RECOGNIZED_TXT, 'w+')
-    file.write(receipt_text)
-    receipt = record_receipt(receipt_text, receipt_data, image_path, img_h, img_w)
+    cropped_receipt = prepare_img(image_path)
+    cv2.imwrite(image_path, cropped_receipt)
+    receipt_data, receipt_text = ocr_image(cropped_receipt)
+    f = open(RECOGNIZED_TXT, 'w+')
+    f.write(receipt_text)
+    f.close()
+    receipt = record_receipt(receipt_text, receipt_data, image_path, cropped_receipt.shape)
 
     if receipt is not None:
         # record_products(receipt_data, r_id)
         record_products_pos(receipt_data, receipt)
 
 #add_new_receipt(image_path_expl)
+#prepare_img(image_path_expl, debug=True)
