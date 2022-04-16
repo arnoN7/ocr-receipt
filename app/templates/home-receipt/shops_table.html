@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<table id="data_table" class="my-3 table table-striped">
+    <thead>
+      <tr>
+        <th>Shop</th>
+        <th>Nb visite(s)</th>
+        <th>Avg Spend per visite</th>
+        <th>Total Amount</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for shop, count, sum, avg in query %}
+          <tr>
+            <td>{{ shop.name }}</td>
+            <td>{{ count }}</td>
+            <td>{{ "%.2f €"|format(avg) }}</td>
+            <td>{{ sum }} €</td>
+            <td>
+              <a href="{{ url_for('receipt_blueprint.receipt_detail', id_receipt=shop.id)}}"
+                    class="btn btn-primary">
+                <i class="mx-1 bi bi-zoom-in"></i> details
+              </a></td>
+          </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

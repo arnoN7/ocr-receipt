@@ -1,12 +1,14 @@
 {% extends "base.html" %}
 
 {% block content %}
+  <div class="pb-3">
   <h4>add a receipt</h4>
     <form method=post action="{{ url_for('receipt_blueprint.receipt_add')}}" enctype=multipart/form-data>
       <input type=file name=file>
       <input type=submit value=Upload accept="image/*">
     </form>
-  <table id="data" class="table table-striped">
+  </div>
+  <table id="data_table" class="my-3 table table-striped">
     <thead>
       <tr>
         <th>Shop</th>
@@ -22,7 +24,7 @@
           <tr>
             <td>{{ shop.name }}</td>
             <td>{{ receipt.total_price }}</td>
-            <td>{{ receipt.date.strftime('%d-%m-%Y') }}</td>
+            <td>{{ receipt.date.strftime('%Y-%m-%d') }}</td>
             <td>Paris</td>
             <td>
               <a href="{{ url_for('receipt_blueprint.receipt_detail', id_receipt=receipt.id)}}"

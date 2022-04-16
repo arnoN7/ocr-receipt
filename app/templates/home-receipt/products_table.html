@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<table id="data_table" class="my-3 table table-striped">
+    <thead>
+      <tr>
+        <th>Product</th>
+        <th>Nb buy</th>
+        <th>Avg Price</th>
+        <th>Min Price</th>
+        <th>Max Price</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for product_group, count, avg, min, max in query %}
+          <tr>
+            <td>{{ product_group.name }}</td>
+            <td>{{ count }}</td>
+            <td>{{ "%.2f €"|format(avg) }}</td>
+            <td>{{ "%.2f €"|format(min) }}</td>
+            <td>{{ "%.2f €"|format(max) }}</td>
+            <td>
+              <a href="{{ url_for('receipt_blueprint.receipt_detail', id_receipt=product_group.id)}}"
+                    class="btn btn-primary">
+                <i class="mx-1 bi bi-zoom-in"></i> details
+              </a></td>
+          </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

@@ -1,4 +1,5 @@
 # -*- encoding: utf-8 -*-
+from datetime import datetime
 
 from app.home_receipt import blueprint
 from flask import render_template, request, redirect, url_for, json
@@ -42,9 +43,26 @@ def test():
 @blueprint.route('/index')
 def index():
     #add_new_receipt('/Users/arnaudrover/PycharmProjects/ocr-receipt/receipts/IMG_9768.jpg')
-    query = db.session.query(Receipt, Shop).join(Receipt, Receipt.shop_id == Shop.id).\
+    query = db.session.query(Receipt, Shop).join(Receipt, Receipt.shop_id == Shop.id). \
         order_by(Receipt.date.desc()).all()
     return render_template('home-receipt/receipts_table.html', title='Bootstrap Table', query=query)
+
+@blueprint.route('/shops')
+def shops():
+    query = db.session.\
+        query(Shop, func.count(Receipt.id), func.sum(Receipt.total_price), func.avg(Receipt.total_price)).\
+        join(Receipt, Receipt.shop_id == Shop.id).group_by(Shop.name). \
+        order_by(Receipt.date.desc()).all()
+    return render_template('home-receipt/shops_table.html', title='Bootstrap Table', query=query)
+
+@blueprint.route('/products')
+def products():
+    query = db.session.\
+        query(ProductGroup, func.count(PaidProduct.id), func.avg(PaidProduct.unit_price),
+              func.min(PaidProduct.unit_price), func.max(PaidProduct.unit_price)).\
+        join(PaidProduct, PaidProduct.product_group_id == ProductGroup.id).group_by(ProductGroup.name). \
+        order_by(ProductGroup.name.asc()).all()
+    return render_template('home-receipt/products_table.html', title='Bootstrap Table', query=query)
 
 @blueprint.route('/receipt/<id_receipt>')
 def receipt_detail(id_receipt):
@@ -77,6 +95,7 @@ def receipt_add():
 @blueprint.route('/receipt/del/<id_receipt>')
 def receipt_delete(id_receipt):
     PaidProduct.query.filter_by(receipt_id=id_receipt).delete()
+    db.session.commit()
     Receipt.query.filter_by(id=id_receipt).delete()
     db.session.commit()
     return redirect(url_for('receipt_blueprint.index'))
@@ -139,7 +158,9 @@ def update_receipt():
     if receipt is None:
         # TODO Error return
         return json.dumps({'status': 'OK'})
-    receipt.total_price = value
+    if name == 'date':
+        value = datetime.strptime(value, '%d-%m-%Y')
+    setattr(receipt, name, value)
     db.session.commit()
 
 
