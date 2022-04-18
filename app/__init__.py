@@ -4,6 +4,7 @@ from flask import Flask
 from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
 from importlib import import_module
+from flask_breadcrumbs import Breadcrumbs, register_breadcrumb, default_breadcrumb_root
 
 
 db = SQLAlchemy()
@@ -19,6 +20,7 @@ def register_blueprints(app):
     for module_name in ['home_receipt']:
         module = import_module('app.{}.routes'.format(module_name))
         app.register_blueprint(module.blueprint)
+        default_breadcrumb_root(module.blueprint, '.')
 
 
 def configure_database(app):
@@ -38,4 +40,6 @@ def create_app(config):
     register_extensions(app)
     register_blueprints(app)
     configure_database(app)
+    # Initialize Flask-Breadcrumbs
+    Breadcrumbs(app=app)
     return app

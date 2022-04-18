@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% from "_formhelpers_add_product.html" import render_field %}
+
+{% block content %}
+        <div class="d-flex">
+            <div class="mx-2 flex-grow-1">
+                <img id="img_receipt" src="/static/receipts/{{file}}"  class="img-fluid imagereceipt-simple">
+            </div>
+            <div class="p-2 mb-4 border border-light rounded">
+                <h6>Shop Details</h6>
+                <div class="container">
+                    <div class="row p-2">
+                        <div class="col-4">
+                            <div class="input-group flex-nowrap">
+                              <span class="input-group-text" id="shop-wrapping"><i class="mx-1 bi bi-shop"></i>Shop</p></span>
+                              <input type="text" class="txtedit_shop form-control"
+                                     data-name='name' data-pk='{{shop.id}}'
+                                     value='{{shop.name}}'>
+                            </div>
+                        </div>
+                        <div class="col-8">
+                            <div class="input-group flex-nowrap">
+                              <span class="input-group-text" id="shop-addr-wrapping">
+                                  <i class="mx-1 bi bi-map"></i>Address</p></span>
+                              <input type="text" class="txtedit_shop form-control"
+                                     aria-describedby="shop-addr-wrapping" data-name='address' data-pk='{{shop.id}}'
+                                     value='{{shop.address}}'>
+                              <input type="text" class="txtedit_shop form-control"
+                                     aria-describedby="shop-addr-wrapping" data-name='postcode' data-pk='{{shop.id}}'
+                                     value='{{shop.postcode}}'>
+                              <input type="text" class="txtedit_shop form-control"
+                                     aria-describedby="shop-addr-wrapping" data-name='city' data-pk='{{shop.id}}'
+                                     value='{{shop.city}}'>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row p-2">
+                        <div class="col">
+                            <div class="input-group flex-nowrap">
+                              <span class="input-group-text" id="shop-phone-wrapping"><i class="mx-1 bi bi-phone">
+                                </i>Phone</p>
+                              </span>
+                              <input type="text" class="txtedit_shop form-control"
+                                     data-name='phone' data-pk='{{shop.id}}'
+                                     value='{{shop.phone}}'>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="input-group flex-nowrap">
+                              <span class="input-group-text" id="shop-siret-wrapping"><i class="mx-1 bi bi-building">
+                                </i>Siret</p>
+                              </span>
+                              <input type="text" class="txtedit_shop form-control"
+                                     data-name='siret' data-pk='{{shop.id}}'
+                                     value='{{shop.siret}}'>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row p-2">
+                        <form>
+                            <td>
+                                {{ render_field(form.shop_select, class="form-control", placeholder="banana") }}
+                            </td>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+{% endblock %}

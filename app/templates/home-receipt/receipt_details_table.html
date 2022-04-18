@@ -2,6 +2,14 @@
 {% from "_formhelpers_add_product.html" import render_field %}
 
 {% block content %}
+    <script>
+  $( function() {
+    var availableTags = {{products_all|tojson}};
+    $( ".tags" ).autocomplete({
+      source: availableTags
+    });
+  } );
+  </script>
     <div class="d-flex">
       <div class="mx-2 flex-grow-1">
         <div style="position: relative;">
@@ -21,7 +29,7 @@
                 <div class="input-group flex-nowrap">
                   <span class="input-group-text" id="shop-wrapping"><i class="mx-1 bi bi-shop"></i>Shop</p></span>
                   <input type="text" class="txtedit_shop form-control" aria-label="Username"
-                         aria-describedby="shop-wrapping" data-name='shop' data-pk='{{shop.id}}'
+                         aria-describedby="shop-wrapping" data-name='name' data-pk='{{shop.id}}'
                          value='{{shop.name}}'>
                 </div>
               </div>
@@ -43,7 +51,6 @@
               </div>
             </div>
           </div>
-
         </div>
       <div class="p-2 mb-4 alert alert-warning">
         <i class="bi bi-exclamation-triangle mx-1"></i><strong>{{delta}}€ not found </strong> in the receipt, add product(s) to complete the list
@@ -63,7 +70,7 @@
               <td></td>
               <form action="{{url_for('receipt_blueprint.user_add_product', id_receipt=receipt.id)}}" method="post">
               <td>
-                {{ render_field(form.product_name, class="form-control form-control-sm", placeholder="banana") }}
+                {{ render_field(form.product_name, class="form-control form-control-sm tags", placeholder="banana") }}
               </td>
               <td>
                 {{ render_field(form.quantity, class="form-control form-control-sm", placeholder="10") }}
@@ -91,7 +98,7 @@
               <td data-name="pid" data-type="int">{{paid_product.id}}</td>
               <td data-name="name" class="name" data-type="text" data-pk="{{paid_product.id}}">
                 <div class='edit' > {{product_group.name}}</div>
-                <input type='text' class='txtedit' value='{{product_group.name}}'
+                <input type='text' class='txtedit tags' value='{{product_group.name}}'
                        data-name='name' data-pk='{{paid_product.id}}' ></td>
               <td data-name="quantity" class="quantity" data-type="text" data-pk="{{paid_product.id}}">
                 <div class='edit' > {{paid_product.quantity}}</div>
@@ -122,8 +129,5 @@
         </tbody>
       </table>
       </div>
-      <script>
-
-    </script>
     </div>
 {% endblock %}

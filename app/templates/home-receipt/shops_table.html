@@ -20,7 +20,7 @@
             <td>{{ "%.2f €"|format(avg) }}</td>
             <td>{{ sum }} €</td>
             <td>
-              <a href="{{ url_for('receipt_blueprint.receipt_detail', id_receipt=shop.id)}}"
+              <a href="{{ url_for('receipt_blueprint.shop_detail', id_shop=shop.id)}}"
                     class="btn btn-primary">
                 <i class="mx-1 bi bi-zoom-in"></i> details
               </a></td>

@@ -12,3 +12,4 @@ flask_migrate
 python-decouple
 flask_login
 email_validator
+Flask-Breadcrumbs

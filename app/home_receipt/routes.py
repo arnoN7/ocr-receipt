@@ -7,14 +7,23 @@ from app.home_receipt.models import *
 from app.home_receipt.ocr_receipt import add_new_receipt, add_product
 from sqlalchemy import update
 from sqlalchemy import func
-from wtforms import Form, BooleanField, StringField, PasswordField, validators, FloatField, IntegerField
+from wtforms import Form, StringField, validators, FloatField, IntegerField, SelectField, DateField
+from flask_breadcrumbs import Breadcrumbs, register_breadcrumb
+import app.home_receipt.breadcrumb as bc
+import app.home_receipt.db_operations as op
+
 
 
 class AddProductForm(Form):
     product_name = StringField('Product Name', [validators.DataRequired(), validators.Length(min=4, max=25)])
     quantity = IntegerField('Quantity', [validators.DataRequired(), validators.number_range(min=1)])
-    unit_price = FloatField('Quantity', [validators.DataRequired(), validators.number_range(min=0)])
-    price = FloatField('Quantity', [validators.DataRequired(), validators.number_range(min=0)])
+    unit_price = FloatField('Unit Price', [validators.DataRequired(), validators.number_range(min=0)])
+    price = FloatField('Price', [validators.DataRequired(), validators.number_range(min=0)])
+
+class UpdateReceiptOverviewForm(Form):
+    shop_select = SelectField("Merge with another shop", validate_choice=False)
+    total_price = FloatField('Total Price', [validators.DataRequired(), validators.number_range(min=0)])
+    date = DateField('Date', [validators.DataRequired()], "%d-%m-%Y")
 
 @blueprint.route('/add_product/<id_receipt>', methods=['POST'])
 def user_add_product(id_receipt):
@@ -41,6 +50,7 @@ def test():
     return render_template('home-receipt/test.html')
 
 @blueprint.route('/index')
+@register_breadcrumb(blueprint, '.', 'Home')
 def index():
     #add_new_receipt('/Users/arnaudrover/PycharmProjects/ocr-receipt/receipts/IMG_9768.jpg')
     query = db.session.query(Receipt, Shop).join(Receipt, Receipt.shop_id == Shop.id). \
@@ -48,14 +58,16 @@ def index():
     return render_template('home-receipt/receipts_table.html', title='Bootstrap Table', query=query)
 
 @blueprint.route('/shops')
+@register_breadcrumb(blueprint, '.shops', 'Shops')
 def shops():
     query = db.session.\
         query(Shop, func.count(Receipt.id), func.sum(Receipt.total_price), func.avg(Receipt.total_price)).\
-        join(Receipt, Receipt.shop_id == Shop.id).group_by(Shop.name). \
-        order_by(Receipt.date.desc()).all()
+        join(Receipt, Receipt.shop_id == Shop.id).group_by(Shop.id). \
+        order_by(Shop.name.asc()).all()
     return render_template('home-receipt/shops_table.html', title='Bootstrap Table', query=query)
 
 @blueprint.route('/products')
+@register_breadcrumb(blueprint, '.products', 'Products')
 def products():
     query = db.session.\
         query(ProductGroup, func.count(PaidProduct.id), func.avg(PaidProduct.unit_price),
@@ -65,8 +77,11 @@ def products():
     return render_template('home-receipt/products_table.html', title='Bootstrap Table', query=query)
 
 @blueprint.route('/receipt/<id_receipt>')
+@register_breadcrumb(blueprint, '.receipt', '/', dynamic_list_constructor=bc.view_receipt_id)
 def receipt_detail(id_receipt):
     form = AddProductForm(request.form)
+    form_receipt = UpdateReceiptOverviewForm(request.form)
+    form_receipt.shop_select.choices = op.get_shops()
     query_products = db.session.query(PaidProduct, ProductGroup).\
         join(ProductGroup, PaidProduct.product_group_id == ProductGroup.id).\
         filter(PaidProduct.receipt_id == id_receipt).order_by(PaidProduct.id.asc()).all()
@@ -74,13 +89,39 @@ def receipt_detail(id_receipt):
         join(Shop, Receipt.shop_id == Shop.id).filter(Receipt.id == id_receipt).first()
     product_sum = db.session.query(func.sum(PaidProduct.price)).filter_by(receipt_id=id_receipt).\
         group_by(PaidProduct.receipt_id).first()
-    delta_sum = 0
+    all_product_group = db.session.query(ProductGroup.name).all()
+    product_all = []
+    for product in all_product_group:
+        product_all.append(product[0])
     if product_sum is not None:
         delta_sum = round(query_receipt.total_price - product_sum[0],2)
     else:
         delta_sum = query_receipt.total_price
     return render_template('home-receipt/receipt_details_table.html', title='Bootstrap Table',
                            query_product=query_products, receipt=query_receipt, shop=query_shop, delta=delta_sum,
+                           form=form, products_all=product_all, form_receipt=form_receipt)
+
+@blueprint.route('/product/<id_product>')
+@register_breadcrumb(blueprint, '.products.id', '', dynamic_list_constructor=bc.view_product_id)
+def product_detail(id_product):
+    query = db.session. \
+        query(Shop, PaidProduct, Receipt, ProductGroup). \
+        join(PaidProduct, PaidProduct.product_group_id == ProductGroup.id).\
+        join(Receipt, PaidProduct.receipt_id == Receipt.id).\
+        join(Shop, Receipt.shop_id == Shop.id).\
+        filter(ProductGroup.id == id_product).all()
+    return render_template('home-receipt/product_detail.html', title='Bootstrap Table', query=query)
+
+@blueprint.route('/shop/<id_shop>')
+@register_breadcrumb(blueprint, '.shops.id', '', dynamic_list_constructor=bc.view_shop_id)
+def shop_detail(id_shop):
+    form = UpdateReceiptOverviewForm()
+    img_path = ""
+    shop = db.session.query(Shop).filter_by(id=id_shop).first()
+    receipt = db.session.query(Receipt).filter_by(shop_id=id_shop).order_by(Receipt.date.desc()).first()
+    if receipt is not None:
+        img_path = receipt.file
+    return render_template('home-receipt/shop_detail.html', title='Bootstrap Table', shop=shop, file=img_path,
                            form=form)
 
 @blueprint.route('/receipt/add', methods=['POST'])
@@ -94,10 +135,8 @@ def receipt_add():
 
 @blueprint.route('/receipt/del/<id_receipt>')
 def receipt_delete(id_receipt):
-    PaidProduct.query.filter_by(receipt_id=id_receipt).delete()
-    db.session.commit()
-    Receipt.query.filter_by(id=id_receipt).delete()
-    db.session.commit()
+    op.delete_receipt_and_paid_products(id_receipt)
+    op.delete_orphan_shops()
     return redirect(url_for('receipt_blueprint.index'))
 
 @blueprint.route('/update_product', methods=['POST'])
@@ -146,7 +185,7 @@ def update_shop():
     if shop is None:
         # TODO Error return
         return json.dumps({'status': 'OK'})
-    shop.name = value
+    setattr(shop, name, value)
     db.session.commit()
 
 @blueprint.route('/update_receipt', methods=['POST'])

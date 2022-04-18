@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<table id="data_table" class="my-3 table table-striped">
+    <thead>
+      <tr>
+        <th>Shop</th>
+        <th>Date</th>
+        <th>Unit Price</th>
+        <th>Qty</th>
+        <th>Price</th>
+        <th>Linked Receipt</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for shop, paid_product, receipt, product_group in query %}
+          <tr>
+            <td>{{ shop.name }}</td>
+            <td>{{ receipt.date }}</td>
+            <td>{{ paid_product.unit_price }} €</td>
+            <td>{{ paid_product.quantity }}</td>
+            <td>{{ paid_product.price }} €</td>
+            <td>
+                <a href="{{ url_for('receipt_blueprint.receipt_detail', id_receipt=receipt.id)}}"
+                    class="btn btn-primary">
+                <i class="mx-1 bi bi-zoom-in"></i> receipt {{receipt.id}}
+              </a>
+            </td>
+          </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

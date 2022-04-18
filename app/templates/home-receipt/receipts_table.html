@@ -15,8 +15,8 @@
         <th>Price</th>
         <th>Date</th>
         <th>City</th>
-        <th></th>
-        <th></th>
+        <th>Receipt</th>
+        <th>Delete</th>
       </tr>
     </thead>
     <tbody>
@@ -29,7 +29,7 @@
             <td>
               <a href="{{ url_for('receipt_blueprint.receipt_detail', id_receipt=receipt.id)}}"
                     class="btn btn-primary">
-                <i class="mx-1 bi bi-zoom-in"></i> details
+                <i class="mx-1 bi bi-zoom-in"></i> Receipt {{receipt.id}}
               </a></td>
             <td><a id="del_{{receipt.id}}" href="{{ url_for('receipt_blueprint.receipt_delete', id_receipt=receipt.id)}}"
             role="button" class="btn btn-outline-danger btn-sm">
