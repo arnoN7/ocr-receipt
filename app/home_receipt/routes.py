@@ -21,14 +21,15 @@ class AddProductForm(Form):
     price = FloatField('Price', [validators.DataRequired(), validators.number_range(min=0)])
 
 class UpdateReceiptOverviewForm(Form):
-    shop_select = SelectField("Merge with another shop", validate_choice=False)
+    shop_select = SelectField("Merge with another shop", [validators.DataRequired()])
     total_price = FloatField('Total Price', [validators.DataRequired(), validators.number_range(min=0)])
-    date = DateField('Date', [validators.DataRequired()], "%d-%m-%Y")
+    date = DateField('Date', [validators.DataRequired()])
 
 @blueprint.route('/add_product/<id_receipt>', methods=['POST'])
 def user_add_product(id_receipt):
     form = AddProductForm(request.form)
-    add_product(form.product_name.data, form.quantity.data, form.unit_price.data, form.price.data, id_receipt)
+    if form.validate():
+        add_product(form.product_name.data, form.quantity.data, form.unit_price.data, form.price.data, id_receipt)
     return redirect(url_for('receipt_blueprint.receipt_detail', id_receipt=id_receipt))
 
 @blueprint.route('/del_product/<id_receipt>/<id_paid_product>', methods=['GET'])
@@ -79,8 +80,8 @@ def products():
 @blueprint.route('/receipt/<id_receipt>')
 @register_breadcrumb(blueprint, '.receipt', '/', dynamic_list_constructor=bc.view_receipt_id)
 def receipt_detail(id_receipt):
-    form = AddProductForm(request.form)
-    form_receipt = UpdateReceiptOverviewForm(request.form)
+    form = AddProductForm()
+    form_receipt = UpdateReceiptOverviewForm()
     form_receipt.shop_select.choices = op.get_shops()
     query_products = db.session.query(PaidProduct, ProductGroup).\
         join(ProductGroup, PaidProduct.product_group_id == ProductGroup.id).\
@@ -97,6 +98,10 @@ def receipt_detail(id_receipt):
         delta_sum = round(query_receipt.total_price - product_sum[0],2)
     else:
         delta_sum = query_receipt.total_price
+    form_receipt.shop_select.default = query_receipt.shop_id
+    form_receipt.total_price.default = query_receipt.total_price
+    form_receipt.date.default = query_receipt.date
+    form_receipt.process()
     return render_template('home-receipt/receipt_details_table.html', title='Bootstrap Table',
                            query_product=query_products, receipt=query_receipt, shop=query_shop, delta=delta_sum,
                            form=form, products_all=product_all, form_receipt=form_receipt)
@@ -188,18 +193,18 @@ def update_shop():
     setattr(shop, name, value)
     db.session.commit()
 
-@blueprint.route('/update_receipt', methods=['POST'])
-def update_receipt():
-    pk = request.form['pk']
-    name = request.form['name']
-    value = request.form['value']
-    receipt = Receipt.query.filter_by(id=pk).first()
-    if receipt is None:
-        # TODO Error return
-        return json.dumps({'status': 'OK'})
-    if name == 'date':
-        value = datetime.strptime(value, '%d-%m-%Y')
-    setattr(receipt, name, value)
-    db.session.commit()
+@blueprint.route('/update_receipt/<id_receipt>', methods=['POST'])
+def update_receipt(id_receipt):
+    form = UpdateReceiptOverviewForm(request.form)
+    form.shop_select.choices = op.get_shops()
+    if form.validate():
+        receipt = Receipt.query.filter_by(id=id_receipt).first()
+        receipt.shop_id = form.shop_select.data
+        receipt.total_price = form.total_price.data
+        receipt.date = form.date.data
+        db.session.commit()
+        op.delete_orphan_shops()
+    return redirect(url_for('receipt_blueprint.receipt_detail', id_receipt=id_receipt))
+
 
 

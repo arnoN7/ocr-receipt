@@ -27,7 +27,6 @@ REGEX_PRODUCT = r"(?P<qte>^\d+) (?P<product>.{3,}) (?P<price>\d+[\.,]\d{2})"
 REGEX_PRODUCT_QTY = r"(?P<qte>^\d+)(?P<product>.+)"
 REGEX_BEGIN_SPACES = r"^[ ]+"
 REGEX_END_SPACES = r"[ ]+$"
-REGEX_DATE = r"\d{2}/\d{2}/\d{4}"
 REGEX_PRICE = r" (?P<price>\d+\.\d{2})"
 REGEX_PRICES = r"(?P<price>\d+\.\d{2}.+)"
 REGEX_RECEIPT = [["siret", r"siret (?P<siret>[\d ]+)"],
@@ -44,7 +43,7 @@ RECOGNIZED_TXT = "recognized.txt"
 # Session = sessionmaker(bind=engine)
 session = db.session
 
-image_path_expl = '/Users/arnaudrover/PycharmProjects/ocr-receipt/app/static/receipts/BOC_IMG_0224.jpg'
+image_path_expl = '/Users/arnaudrover/PycharmProjects/ocr-receipt/app/static/receipts/NAT_IMG_0220.jpg'
 
 
 class Rect():
@@ -56,7 +55,7 @@ class Rect():
 
     def is_vertical_overlap(self, rect, min_overlap=0):
         if self.x <= rect.x < (self.x + self.width) <= (rect.x + rect.width):
-            if (((self.x + self.width) - rect.x)/((rect.x + rect.width) - self.x)) > min_overlap:
+            if (((self.x + self.width) - rect.x) / ((rect.x + rect.width) - self.x)) > min_overlap:
                 return True
         if rect.x <= self.x < (rect.x + rect.width) <= (self.x + self.width):
             if (((rect.x + rect.width) - self.x) / ((self.x + self.width) - rect.x)) > min_overlap:
@@ -112,16 +111,16 @@ def prepare_img(image, debug=False):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     blurred = cv2.GaussianBlur(gray, (5, 5,), 0)
     edged = cv2.Canny(blurred, 75, 200)
-    rect_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (120,120))
+    rect_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (120, 120))
     dilation = cv2.dilate(edged, rect_kernel, iterations=1)
     # Find Receipt contour
     contours, hierarchy = cv2.findContours(dilation.copy(), cv2.RETR_EXTERNAL,
-                            cv2.CHAIN_APPROX_SIMPLE)
+                                           cv2.CHAIN_APPROX_SIMPLE)
     receipt_cnt = sorted(contours, key=cv2.contourArea, reverse=True)
     x, y, w, h = cv2.boundingRect(receipt_cnt[0])
-    cropped_receipt = gray[y:y+h, x:x+w]
+    cropped_receipt = gray[y:y + h, x:x + w]
     cropped_receipt = cv2.adaptiveThreshold(cropped_receipt, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, \
-                                cv2.THRESH_BINARY, 39, 25)
+                                            cv2.THRESH_BINARY, 39, 25)
     if debug:
         cv2.drawContours(img, contours, -1, (0, 255, 0), 3)
         cv2.imshow('Original ', gray)
@@ -130,6 +129,7 @@ def prepare_img(image, debug=False):
         cv2.waitKey()
         cv2.destroyAllWindows()
     return cropped_receipt
+
 
 def ocr_image(cropped_receipt):
     data = pytesseract.image_to_data(cropped_receipt, output_type=Output.DICT)
@@ -193,6 +193,7 @@ def ocr_image(cropped_receipt):
             result_text = result_text + str(result[i]['text']) + '\n'
     return result, result_text
 
+
 def record_receipt(text, text_data, path, shape):
     img_h = shape[0]
     img_w = shape[1]
@@ -203,7 +204,16 @@ def record_receipt(text, text_data, path, shape):
     for param in REGEX_RECEIPT:
         matches = re.finditer(param[1], text, re.MULTILINE)
         for match in matches:
-            params[param[0]] = match.group(param[0])
+            if param[0] == "date":
+                # get the smallest date to avoid future date coupon validity
+                if 'date' in params.keys():
+                    if datetime.strptime(params['date'], '%d/%m/%Y') > \
+                            datetime.strptime(match.group('date'), '%d/%m/%Y'):
+                        params['date'] = match.group(param[0])
+                else:
+                    params[param[0]] = match.group(param[0])
+            else:
+                params[param[0]] = match.group(param[0])
             break
     if params.get('date', None) is not None:
         params['date'] = datetime.strptime(params['date'], '%d/%m/%Y')
@@ -371,8 +381,8 @@ def record_products_pos(text_data, receipt):
     return None
 
 
-def add_new_receipt(image_path):
-    cropped_receipt = prepare_img(image_path)
+def add_new_receipt(image_path, debug=False):
+    cropped_receipt = prepare_img(image_path, debug)
     cv2.imwrite(image_path, cropped_receipt)
     receipt_data, receipt_text = ocr_image(cropped_receipt)
     f = open(RECOGNIZED_TXT, 'w+')
@@ -384,5 +394,5 @@ def add_new_receipt(image_path):
         # record_products(receipt_data, r_id)
         record_products_pos(receipt_data, receipt)
 
-#add_new_receipt(image_path_expl)
+#add_new_receipt(image_path_expl, debug=True)
 #prepare_img(image_path_expl, debug=True)

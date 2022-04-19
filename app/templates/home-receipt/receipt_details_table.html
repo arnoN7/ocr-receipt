@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "_formhelpers_add_product.html" import render_field %}
+{% from "_formhelpers_update_receipt.html" import render_field_up %}
 
 {% block content %}
     <script>
@@ -24,32 +25,31 @@
             {{receipt.prices_pos_height/receipt.img_height}}, null)" onmouseout="hide_show_line()">
           <h6>Receipt Overview</h6>
           <div class="container">
-            <div class="row">
+            <form action="{{url_for('receipt_blueprint.update_receipt', id_receipt=receipt.id)}}" method="post">
+            <div class="row p-2">
               <div class="col">
-                <div class="input-group flex-nowrap">
-                  <span class="input-group-text" id="shop-wrapping"><i class="mx-1 bi bi-shop"></i>Shop</p></span>
-                  <input type="text" class="txtedit_shop form-control" aria-label="Username"
-                         aria-describedby="shop-wrapping" data-name='name' data-pk='{{shop.id}}'
-                         value='{{shop.name}}'>
+                <div class="input-group">
+                  <span class="input-group-text" ><i class="mx-1 bi bi-shop"></i>Shop</p></span>
+                   {{ render_field_up(form_receipt.shop_select, class="form-select") }}
                 </div>
               </div>
               <div class="col">
                 <div class="input-group flex-nowrap">
                   <span class="input-group-text" id="total-wrapping"><i class="bi bi-currency-euro"></i>Total</p></span>
-                  <input type="text" class="txtedit_receipt form-control"
-                         aria-describedby="total-wrapping" data-name='total_price' data-pk='{{receipt.id}}'
-                         value='{{receipt.total_price}}'>
+                  {{ render_field_up(form_receipt.total_price, class="form-control") }}
                 </div>
               </div>
               <div class="col">
                 <div class="input-group flex-nowrap">
                   <span class="input-group-text" id="date-wrapping"><i class="px-1 bi bi-calendar3-event"></i>Date</p></span>
-                  <input type="text" class="txtedit_receipt form-control"
-                         aria-describedby="total-wrapping" data-name='date' data-pk='{{receipt.id}}'
-                         value='{{receipt.date.strftime('%d-%m-%Y')}}'>
+                  {{ render_field_up(form_receipt.date, class="form-control") }}
                 </div>
               </div>
             </div>
+            <div class="row p-2">
+              <button type="submit" class="btn btn-success btn-sm"><i class="bi p-1 bi-arrow-repeat"></i>Update</button>
+            </div>
+            </form>
           </div>
         </div>
       <div class="p-2 mb-4 alert alert-warning">

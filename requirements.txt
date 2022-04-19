@@ -13,3 +13,4 @@ python-decouple
 flask_login
 email_validator
 Flask-Breadcrumbs
+gunicorn==20.1.0
