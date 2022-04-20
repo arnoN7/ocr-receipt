@@ -30,7 +30,8 @@ services:
       MYSQL_ROOT_PASSWORD: xxx
       TZ: Europe/Paris
     volumes:
-      - /Users/arnaudrover/PycharmProjects/ocr-receipt/dbmaria:/var/lib/mysql
+      - /volume1/docker/ocr-receipt/db:/var/lib/mysql
+      - /volume1/docker/ocr-receipt/receipt:/app/static/receipts
 
   phpmyadmin:
     image: phpmyadmin
