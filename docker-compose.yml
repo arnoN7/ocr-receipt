@@ -3,25 +3,43 @@ services:
   ocr-receipt:
     container_name: ocr_receipt
     restart: always
-    env_file: .env
-    build: .
-    networks:
-      - db_network
-      - web_network
-  nginx:
-    container_name: nginx
-    restart: always
-    image: "nginx:latest"
     ports:
-      - "85:85"
-    volumes:
-      - ./nginx:/etc/nginx/conf.d
-    networks:
-      - web_network
+      - 9021:5002
+    build: .
+    environment:
+      DB_NAME: db_ocr
+      DEBUG: "False"
+      SECRET_KEY: Secret###¨¨Ke7
+      DB_ENGINE: mysql+pymysql
+      DB_HOST: ocrdb
+      DB_PORT: 3306
+      DB_USERNAME: db_ocr
+      DB_PASS: xxx
     depends_on:
-      - ocr-receipt
+      - "ocrdb"
+
+  ocrdb:
+    image: mariadb
+    restart: always
+    ports:
+        - 9020:3306
+    environment:
+      MYSQL_DATABASE: db_ocr
+      MYSQL_USER: db_ocr
+      MYSQL_PASSWORD: xxx
+      MYSQL_ROOT_PASSWORD: xxx
+      TZ: Europe/Paris
+    volumes:
+      - /Users/arnaudrover/PycharmProjects/ocr-receipt/dbmaria:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin
+    restart: always
+    ports:
+      - 9022:80
+    environment:
+      - PMA_ARBITRARY=1
+
 networks:
-  db_network:
-    driver: bridge
-  web_network:
-    driver: bridge
+  ocr-network:
+    driver: custom-driver-1

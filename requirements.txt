@@ -14,3 +14,5 @@ flask_login
 email_validator
 Flask-Breadcrumbs
 gunicorn==20.1.0
+psycopg2
+pymysql

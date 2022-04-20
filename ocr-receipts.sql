@@ -1,11 +1,11 @@
 CREATE TABLE "shop" (
   "id" SERIAL PRIMARY KEY,
-  "name" varchar,
-  "address" varchar,
+  "name" varchar(64),
+  "address" varchar(128),
   "postcode" int,
-  "city" varchar,
-  "siret" varchar,
-  "phone" varchar,
+  "city" varchar(64),
+  "siret" varchar(32),
+  "phone" varchar(32),
   "created_at" timestamp DEFAULT 'now()'
 );
 
@@ -13,7 +13,7 @@ CREATE TABLE "receipt" (
   "id" SERIAL PRIMARY KEY,
   "shop_id" int,
   "total_price" float,
-  "file" varchar,
+  "file" varchar(256),
   "date" timestamp DEFAULT 'now()',
   "prices_pos_top" integer,
   "prices_pos_left" integer,
@@ -39,16 +39,22 @@ CREATE TABLE "paid_product" (
 
 CREATE TABLE "product_group" (
   "id" SERIAL PRIMARY KEY,
-  "name" varchar,
+  "name" varchar(128),
   "created_at" timestamp DEFAULT 'now()'
 );
 
 CREATE TABLE "product" (
   "id" SERIAL PRIMARY KEY,
-  "name" varchar,
+  "name" varchar(128),
   "created_at" timestamp DEFAULT 'now()',
   "product_group_id" int
 );
+
+CREATE UNIQUE INDEX ON "receipt" ("file");
+
+CREATE UNIQUE INDEX ON "product_group" ("name");
+
+CREATE UNIQUE INDEX ON "product" ("name");
 
 ALTER TABLE "receipt" ADD FOREIGN KEY ("shop_id") REFERENCES "shop" ("id");
 
@@ -57,9 +63,3 @@ ALTER TABLE "paid_product" ADD FOREIGN KEY ("receipt_id") REFERENCES "receipt" (
 ALTER TABLE "paid_product" ADD FOREIGN KEY ("product_group_id") REFERENCES "product_group" ("id");
 
 ALTER TABLE "product" ADD FOREIGN KEY ("product_group_id") REFERENCES "product_group" ("id");
-
-CREATE UNIQUE INDEX ON "receipt" ("file");
-
-CREATE UNIQUE INDEX ON "product_group" ("name");
-
-CREATE UNIQUE INDEX ON "product" ("name");
