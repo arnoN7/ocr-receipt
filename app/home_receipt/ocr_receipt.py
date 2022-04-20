@@ -28,7 +28,10 @@ REGEX_PRODUCT_QTY = r"(?P<qte>^\d+)(?P<product>.+)"
 REGEX_BEGIN_SPACES = r"^[ ]+"
 REGEX_END_SPACES = r"[ ]+$"
 REGEX_PRICE = r" (?P<price>\d+\.\d{2})"
-REGEX_PRICES = r"(?P<price>\d+\.\d{2}.+)"
+REGEX_KG_QTY = r"(?P<qty>\d+\.\d{3})"
+REGEX_KG_UNIT = r"(?P<qty>\d+)"
+REGEX_UNIT_PRICE = r"(?P<qty>\d+)[^\d]+(?P<unit_price>\d+\.\d{2})"
+REGEX_PRICES = r"(?P<price>\d+\.\d{2}).+"
 REGEX_RECEIPT = [["siret", r"siret (?P<siret>[\d ]+)"],
                  ["address", r"(?P<address>\d+.+(rue|avenue|av|impasse|imp).+)"],
                  ["postcode", r"(?P<postcode>\d{5}) [^\n ]+"],
@@ -363,7 +366,43 @@ def record_products_pos(text_data, receipt):
                 quantity = 1
                 product_name = product_text
             unit_price = price / quantity
+            product_name = re.sub(REGEX_BEGIN_SPACES, '', product_name)
+            product_name = re.sub(REGEX_END_SPACES, '', product_name)
             product = Product.query.filter_by(name=product_name).first()
+            # try to find unit price for vegetables next line
+            if not is_product_line(text_data[i + 1], column_price):
+                next_line = text_data[i + 1]['text']
+                next_line.replace(str(price), '')
+                # 1 try to find a qty in float like x.xxx and a price x.xx (x is a number)
+                matches = re.finditer(REGEX_KG_QTY, next_line, re.MULTILINE)
+                details_found = False
+                for match in matches:
+                    quantity_next = float(match.group('qty'))
+                    # remove quantity from string
+                    next_line = next_line.replace(match.group('qty'), '')
+                    # find a price
+                    matches_price = re.finditer(REGEX_PRICES, next_line, re.MULTILINE)
+                    for match_price in matches_price:
+                        unit_price_next = float(match_price.group('price'))
+                        break
+                    details_found = True
+                    break
+                # 2 try to find a qty integer x and a price x.xx (x is a number)
+                if not details_found:
+                    # find a price
+                    matches = re.finditer(REGEX_PRICES, next_line, re.MULTILINE)
+                    for match in matches:
+                        unit_price_next = float(match.group('price'))
+                        next_line = next_line.replace(match.group('price'), '')
+                        matches_qty = re.finditer(REGEX_KG_UNIT, next_line, re.MULTILINE)
+                        for match_qty in matches_qty:
+                            quantity_next = int(match_qty.group('qty'))
+                            details_found = True
+                            break
+                        break
+                if details_found:
+                    quantity = quantity_next
+                    unit_price = unit_price_next
             # Add product if not exist in product list
             if product is None:
                 product_group = ProductGroup(name=product_name)
@@ -394,5 +433,5 @@ def add_new_receipt(image_path, debug=False):
         # record_products(receipt_data, r_id)
         record_products_pos(receipt_data, receipt)
 
-#add_new_receipt(image_path_expl, debug=True)
-#prepare_img(image_path_expl, debug=True)
+# add_new_receipt(image_path_expl, debug=True)
+# prepare_img(image_path_expl, debug=True)

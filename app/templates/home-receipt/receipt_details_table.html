@@ -92,12 +92,21 @@
               </form>
             </tr>
           {% for paid_product, product_group in query_product %}
-            <tr onmouseover="show_line({{paid_product.pos_top}}, {{paid_product.pos_left}}, {{paid_product.pos_width}},
+            <tr
+                    {% if ((paid_product.quantity * paid_product.unit_price - paid_product.price) |abs) > 0.1  %}
+                      class="alert alert-warning"
+                    {% endif %}
+                onmouseover="show_line({{paid_product.pos_top}}, {{paid_product.pos_left}}, {{paid_product.pos_width}},
             {{paid_product.pos_height}}, 'del_'+{{paid_product.id}})"
                 onmouseout="hide_show_line()" class="edit_tr" id="{{paid_product.id}}" >
               <td data-name="pid" data-type="int">{{paid_product.id}}</td>
               <td data-name="name" class="name" data-type="text" data-pk="{{paid_product.id}}">
-                <div class='edit' > {{product_group.name}}</div>
+                <div class='edit' >
+                  {% if ((paid_product.quantity * paid_product.unit_price - paid_product.price)|abs) > 0.1  %}
+                    <i class="bi bi-exclamation-triangle mx-1"></i>
+                  {% endif %}
+                  {{product_group.name}}
+                </div>
                 <input type='text' class='txtedit tags' value='{{product_group.name}}'
                        data-name='name' data-pk='{{paid_product.id}}' ></td>
               <td data-name="quantity" class="quantity" data-type="text" data-pk="{{paid_product.id}}">
