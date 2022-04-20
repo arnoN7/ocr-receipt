@@ -14,7 +14,7 @@ services:
       DB_HOST: ocrdb
       DB_PORT: 3306
       DB_USERNAME: db_ocr
-      DB_PASS: xxx
+      DB_PASS: zTDefLx4f4Q8VXBKYkyFVGQ8
     depends_on:
       - "ocrdb"
 
@@ -26,12 +26,12 @@ services:
     environment:
       MYSQL_DATABASE: db_ocr
       MYSQL_USER: db_ocr
-      MYSQL_PASSWORD: xxx
-      MYSQL_ROOT_PASSWORD: xxx
+      MYSQL_PASSWORD: zTDefLx4f4Q8VXBKYkyFVGQ8
+      MYSQL_ROOT_PASSWORD: zTDefLx4f4Q8VXBKYkyFVGQ8
       TZ: Europe/Paris
     volumes:
       - /volume1/docker/ocr-receipt/db:/var/lib/mysql
-      - /volume1/docker/ocr-receipt/receipt:/app/static/receipts
+      - /volume1/docker/ocr-receipt/receipts:/app/static/receipts
 
   phpmyadmin:
     image: phpmyadmin
