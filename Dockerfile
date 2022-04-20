@@ -11,7 +11,7 @@ RUN apt-get update
 RUN apt-get install ffmpeg libsm6 libxext6  -y
 # install tesseract
 RUN apt-get install tesseract-ocr -y
-RUN apt-get install tesseract-ocr-all -y
+RUN apt-get install tesseract-ocr-fra -y
 
 # install python dependencies
 RUN pip install --upgrade pip
