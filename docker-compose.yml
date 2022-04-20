@@ -17,6 +17,8 @@ services:
       DB_PASS: zTDefLx4f4Q8VXBKYkyFVGQ8
     depends_on:
       - "ocrdb"
+    volumes:
+      - /volume1/docker/ocr-receipt/receipts:/app/static/receipts
 
   ocrdb:
     image: mariadb
@@ -31,7 +33,6 @@ services:
       TZ: Europe/Paris
     volumes:
       - /volume1/docker/ocr-receipt/db:/var/lib/mysql
-      - /volume1/docker/ocr-receipt/receipts:/app/static/receipts
 
   phpmyadmin:
     image: phpmyadmin
