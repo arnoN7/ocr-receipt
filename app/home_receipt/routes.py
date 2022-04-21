@@ -73,7 +73,7 @@ def products():
     query = db.session.\
         query(ProductGroup, func.count(PaidProduct.id), func.avg(PaidProduct.unit_price),
               func.min(PaidProduct.unit_price), func.max(PaidProduct.unit_price)).\
-        join(PaidProduct, PaidProduct.product_group_id == ProductGroup.id).group_by(ProductGroup.name). \
+        join(PaidProduct, PaidProduct.product_group_id == ProductGroup.id).group_by(ProductGroup.id). \
         order_by(ProductGroup.name.asc()).all()
     return render_template('home-receipt/products_table.html', title='Bootstrap Table', query=query)
 
@@ -162,6 +162,9 @@ def update_product_group():
             if product_group is None:
                 #no product group with this name exits --> update current product group name
                 product_group = ProductGroup.query.filter_by(id=paid_product.product_group_id).first()
+                #add product with the new name to match next products with this name
+                product = Product(name=value, product_group_id=product_group.id)
+                db.session.add(product)
             else:
                 if product_group.id == old_group_id:
                     #Nothing to change
