@@ -3,6 +3,17 @@
 {% block content %}
 
 <table id="data_table" class="my-3 table table-striped">
+    <canvas id="linechart"></canvas>
+    <canvas id="barchart"></canvas>
+    <script>
+        var data = [{% for shop, paid_product, receipt, product_group in query %}
+        "{{paid_product.unit_price}}",
+        {% endfor %}];
+        var labels = [{% for shop, paid_product, receipt, product_group in query %}
+        "{{receipt.date}}",
+        {% endfor %}];
+    </script>
+    <script type="text/javascript" src="/static/linechart.js" language="javascript"></script>
     <thead>
       <tr>
         <th>Shop</th>
