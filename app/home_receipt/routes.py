@@ -116,7 +116,7 @@ def product_detail(id_product):
         join(Shop, Receipt.shop_id == Shop.id).\
         filter(ProductGroup.id == id_product).all()
     queryshop = db.session.query(Shop.name, func.avg(PaidProduct.unit_price)).select_from(PaidProduct). \
-        join(Receipt, (PaidProduct.receipt_id == Receipt.id) & (Receipt.shop_id == Shop.id)).\
+        join(Receipt, (PaidProduct.receipt_id == Receipt.id)).\
         join(Shop, (Receipt.shop_id == Shop.id)). \
         join(ProductGroup, (PaidProduct.product_group_id == ProductGroup.id)). \
         filter(ProductGroup.id == id_product).group_by(Shop.id).all()
