@@ -14,8 +14,8 @@ const myChart = new Chart(ctx, {
     }
 });
 
-/*const ctx = document.getElementById('barchart').getContext('2d');
-const myChart = new Chart(ctx, {
+const ctxbar = document.getElementById('barchart').getContext('2d');
+const myChartbar = new Chart(ctxbar, {
     type: 'bar',
     data: {
         labels: labelsbar,
@@ -28,4 +28,4 @@ const myChart = new Chart(ctx, {
     options: {
         responsive: true
     }
-});*/
+});

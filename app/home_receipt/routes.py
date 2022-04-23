@@ -115,7 +115,12 @@ def product_detail(id_product):
         join(Receipt, PaidProduct.receipt_id == Receipt.id).\
         join(Shop, Receipt.shop_id == Shop.id).\
         filter(ProductGroup.id == id_product).all()
-    return render_template('home-receipt/product_detail.html', title='Bootstrap Table', query=query)
+    queryshop = db.session.query(Shop.name, PaidProduct.unit_price ). \
+        join(PaidProduct, PaidProduct.product_group_id == ProductGroup.id). \
+        join(Receipt, (PaidProduct.receipt_id == Receipt.id) & (Receipt.shop_id == Shop.id)). \
+        filter(ProductGroup.id == id_product).group_by(Shop.id).all()
+    return render_template('home-receipt/product_detail.html', title='Bootstrap Table', query=query,
+                           queryshop=queryshop)
 
 @blueprint.route('/shop/<id_shop>')
 @register_breadcrumb(blueprint, '.shops.id', '', dynamic_list_constructor=bc.view_shop_id)

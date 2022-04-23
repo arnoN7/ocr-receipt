@@ -12,6 +12,12 @@
         var labels = [{% for shop, paid_product, receipt, product_group in query %}
         "{{receipt.date}}",
         {% endfor %}];
+        var databar = [{% for shop, price in queryshop %}
+            "{{price}}",
+        {% endfor %}];
+        var labelsbar = [{% for shop, price in queryshop %}
+            "{{shop}}",
+        {% endfor %}];
     </script>
     <script type="text/javascript" src="/static/linechart.js" language="javascript"></script>
     <thead>
