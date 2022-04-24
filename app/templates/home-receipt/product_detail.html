@@ -2,24 +2,36 @@
 
 {% block content %}
 
+<script>
+    var data = [{% for shop, paid_product, receipt, product_group in query %}
+    "{{paid_product.unit_price}}",
+    {% endfor %}];
+    var labels = [{% for shop, paid_product, receipt, product_group in query %}
+    "{{receipt.date}}",
+    {% endfor %}];
+    var databar = [{% for shop, price in queryshop %}
+        "{{price}}",
+    {% endfor %}];
+    var labelsbar = [{% for shop, price in queryshop %}
+        "{{shop}}",
+    {% endfor %}];
+</script>
+<div class="container">
+    <div class="row p-2">
+        <div class="col px-2">
+            <canvas id="linechart"></canvas>
+        </div>
+        <div class="col px-2">
+            <canvas id="barchart"></canvas>
+        </div>
+    </div>
+    <div class="row p-2">
+
+    </div>
+</div>
+<script type="text/javascript" src="/static/linechart.js" language="javascript"></script>
+<div class="row p-2">
 <table id="data_table" class="my-3 table table-striped">
-    <canvas id="linechart"></canvas>
-    <canvas id="barchart"></canvas>
-    <script>
-        var data = [{% for shop, paid_product, receipt, product_group in query %}
-        "{{paid_product.unit_price}}",
-        {% endfor %}];
-        var labels = [{% for shop, paid_product, receipt, product_group in query %}
-        "{{receipt.date}}",
-        {% endfor %}];
-        var databar = [{% for shop, price in queryshop %}
-            "{{price}}",
-        {% endfor %}];
-        var labelsbar = [{% for shop, price in queryshop %}
-            "{{shop}}",
-        {% endfor %}];
-    </script>
-    <script type="text/javascript" src="/static/linechart.js" language="javascript"></script>
     <thead>
       <tr>
         <th>Shop</th>
@@ -48,4 +60,25 @@
       {% endfor %}
     </tbody>
   </table>
+</div>
+<div class="row my-4 p-2">
+    <h6><strong>Aliases used for product</strong></h6>
+    <table class="table table-striped">
+        <thead>
+            <th>Aliases</th>
+            <th>Delete</th>
+        </thead>
+        <tbody>
+            {% for product in queryalias %}
+            <tr>
+                <td>{{product.name}}</td>
+                <td>
+                    <a href="{{url_for('receipt_blueprint.alias_delete', id_alias=product.id)}}"
+                       role="button" class="btn btn-outline-danger btn-sm">
+                      <i class="bi bi-x-circle"></i></a>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 {% endblock %}

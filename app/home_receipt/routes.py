@@ -120,8 +120,9 @@ def product_detail(id_product):
         join(Shop, (Receipt.shop_id == Shop.id)). \
         join(ProductGroup, (PaidProduct.product_group_id == ProductGroup.id)). \
         filter(ProductGroup.id == id_product).group_by(Shop.id).all()
+    queryalias = db.session.query(Product).filter_by(product_group_id=id_product)
     return render_template('home-receipt/product_detail.html', title='Bootstrap Table', query=query,
-                           queryshop=queryshop)
+                           queryshop=queryshop, queryalias=queryalias)
 
 @blueprint.route('/shop/<id_shop>')
 @register_breadcrumb(blueprint, '.shops.id', '', dynamic_list_constructor=bc.view_shop_id)
@@ -214,6 +215,11 @@ def update_receipt(id_receipt):
         db.session.commit()
         op.delete_orphan_shops()
     return redirect(url_for('receipt_blueprint.receipt_detail', id_receipt=id_receipt))
+
+@blueprint.route('/alias/del/<id_alias>')
+def alias_delete(id_alias):
+    product_group_id = op.delete_alias(id_alias)
+    return redirect(url_for('receipt_blueprint.product_detail', id_product=product_group_id))
 
 
 
