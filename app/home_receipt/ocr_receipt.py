@@ -408,6 +408,11 @@ def record_products_pos(text_data, receipt):
                 product_group = ProductGroup(name=product_name)
                 session.add(product_group)
                 session.commit()
+                # if no product name set a unique one
+                if product_name == "":
+                    product_name = "not found {id}".format(id=product_group.id)
+                    product_group.name = product_name
+                    session.commit()
                 product = Product(name=product_name, product_group_id=product_group.id)
                 session.add(product)
                 session.commit()
