@@ -10,7 +10,12 @@ const myChart = new Chart(ctx, {
         }]
     },
     options: {
-        responsive: true
+        responsive: true,
+        plugins: {
+            legend: {
+                display: false
+            }
+        }
     }
 });
 
@@ -26,6 +31,11 @@ const myChartbar = new Chart(ctxbar, {
         }]
     },
     options: {
-        responsive: true
+        responsive: true,
+        plugins: {
+            legend: {
+                display: false
+            }
+        }
     }
 });
