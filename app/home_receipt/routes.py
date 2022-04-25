@@ -16,7 +16,7 @@ import app.home_receipt.db_operations as op
 
 class AddProductForm(Form):
     product_name = StringField('Product Name', [validators.DataRequired(), validators.Length(min=4, max=25)])
-    quantity = IntegerField('Quantity', [validators.DataRequired(), validators.number_range(min=1)])
+    quantity = FloatField('Quantity', [validators.DataRequired(), validators.number_range(min=0)])
     unit_price = FloatField('Unit Price', [validators.DataRequired(), validators.number_range(min=0)])
     price = FloatField('Price', [validators.DataRequired(), validators.number_range(min=0)])
 
