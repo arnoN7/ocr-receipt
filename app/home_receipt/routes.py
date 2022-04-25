@@ -23,7 +23,7 @@ class AddProductForm(Form):
 class UpdateReceiptOverviewForm(Form):
     shop_select = SelectField("Merge with another shop", [validators.DataRequired()])
     total_price = FloatField('Total Price', [validators.DataRequired(), validators.number_range(min=0)])
-    date = DateField('Date', [validators.DataRequired()])
+    date = DateField('Receipt Date', [validators.DataRequired()])
 
 @blueprint.route('/add_product/<id_receipt>', methods=['POST'])
 def user_add_product(id_receipt):
