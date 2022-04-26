@@ -5,6 +5,7 @@ from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
 from importlib import import_module
 from flask_breadcrumbs import Breadcrumbs, register_breadcrumb, default_breadcrumb_root
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 
 db = SQLAlchemy()
@@ -42,4 +43,6 @@ def create_app(config):
     configure_database(app)
     # Initialize Flask-Breadcrumbs
     Breadcrumbs(app=app)
+    # avoid HTTP redirect behind reverse proxy
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_host=1)
     return app
