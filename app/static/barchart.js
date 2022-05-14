@@ -1,10 +1,10 @@
-const ctx = document.getElementById('linechart').getContext('2d');
-const myChart = new Chart(ctx, {
-    type: 'line',
+var ctxbar = document.getElementById('barchart').getContext('2d');
+var myChartbar = new Chart(ctxbar, {
+    type: 'bar',
     data: {
-        labels: labels,
+        labels: labelsbar,
         datasets: [{
-            data: data,
+            data: databar,
             borderColor: '#FD6159',
             backgroundColor: '#FD6159'
         }]

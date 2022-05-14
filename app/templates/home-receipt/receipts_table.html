@@ -8,6 +8,22 @@
       <input type=submit value=Upload accept="image/*">
     </form>
   </div>
+<script>
+    var databar = [{% for month, total in queryspends %}
+        "{{total}}",
+    {% endfor %}];
+    var labelsbar = [{% for month, total in queryspends %}
+        "{{month}}",
+    {% endfor %}];
+</script>
+<div class="container">
+    <div class="row p-3">
+        <div class="col px-2">
+            <canvas id="barchart"></canvas>
+        </div>
+    </div>
+</div>
+<script type="text/javascript" src="/static/barchart.js" language="javascript"></script>
   <table id="data_table" class="my-3 table table-striped">
     <thead>
       <tr>

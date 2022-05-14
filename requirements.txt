@@ -16,3 +16,5 @@ Flask-Breadcrumbs
 gunicorn==20.1.0
 psycopg2
 pymysql
+wheel
+pandas

@@ -43,6 +43,5 @@ def create_app(config):
     configure_database(app)
     # Initialize Flask-Breadcrumbs
     Breadcrumbs(app=app)
-    # avoid HTTP redirect behind reverse proxy
-    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_host=1)
+
     return app
