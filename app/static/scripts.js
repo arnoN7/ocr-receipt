@@ -89,6 +89,12 @@ $(document).ready(function(){
     var dataTable = $('#data_table').DataTable();
 });
 
+$(document).ready(function(){
+    var dataTable = $('#data_table_receipt').DataTable({
+        order: [[0, 'desc']],
+    });
+});
+
 function draw() {
   console.log("tt");
   let ctx = document.getElementById('canvas').getContext('2d');

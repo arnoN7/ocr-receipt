@@ -24,9 +24,10 @@
     </div>
 </div>
 <script type="text/javascript" src="/static/barchart.js" language="javascript"></script>
-  <table id="data_table" class="my-3 table table-striped">
+  <table id="data_table_receipt" class="my-3 table table-striped">
     <thead>
       <tr>
+        <th>Id</th>
         <th>Shop</th>
         <th>Price</th>
         <th>Date</th>
@@ -38,6 +39,7 @@
     <tbody>
       {% for receipt, shop in query %}
           <tr>
+            <td>{{ receipt.id }}</td>
             <td>{{ shop.name }}</td>
             <td>{{ receipt.total_price }}</td>
             <td>{{ receipt.date.strftime('%Y-%m-%d') }}</td>
